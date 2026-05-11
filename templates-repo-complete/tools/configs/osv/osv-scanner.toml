@@ -1,9 +1,0 @@
-# OSV-Scanner config
-[scan]
-recursive = true
-
-[[ignored-vulns]]
-# Add CVE ids here with justification + sunset date
-# id = "CVE-2024-XXXXX"
-# reason = "Not exploitable in our usage — sunset 2026-12"
-# ignore-until = "2026-12-31"

@@ -1,5 +1,0 @@
-name: api-keys
-version: 0.1.0
-description: Génération + rotation + scopes pour API keys utilisateur
-status: spec_only
-maintainer: factory-core

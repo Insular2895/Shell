@@ -1,8 +1,0 @@
-# Trivy config
-severity:
-  - HIGH
-  - CRITICAL
-ignore-unfixed: false
-timeout: 5m
-db:
-  no-progress: true

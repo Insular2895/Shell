@@ -1,5 +1,0 @@
-name: status-service
-version: 0.1.0
-description: API site_status + feature_flags consultable par les apps
-status: spec_only
-maintainer: factory-core

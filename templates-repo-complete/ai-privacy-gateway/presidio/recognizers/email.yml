@@ -1,8 +1,0 @@
-# Presidio recognizer - Email override (uses awesome-falsehood-aware logic)
-# We don't use a regex alone — Presidio's built-in EMAIL_ADDRESS uses email-validator.
-# This file only adds context boosters.
-recognizers:
-  - name: email_with_context
-    supported_language: any
-    supported_entity: EMAIL_ADDRESS
-    context: [email, mail, contact, reply, support, no-reply, expéditeur, destinataire]
