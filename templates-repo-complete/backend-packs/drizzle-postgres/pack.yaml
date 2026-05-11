@@ -1,0 +1,4 @@
+name: drizzle-postgres
+version: 0.1.0
+description: drizzle-postgres backend pattern (scaffold — to detail phase 2-3)
+status: spec_only

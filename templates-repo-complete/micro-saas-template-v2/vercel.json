@@ -1,0 +1,39 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
+  "regions": ["cdg1"],
+  "functions": {
+    "app/api/upload/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/jobs/create/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/jobs/worker/claim/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/jobs/worker/complete/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/stripe/webhook/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/cron/sweep-jobs/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/cron/auto-degrade/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sweep-jobs",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/auto-degrade",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

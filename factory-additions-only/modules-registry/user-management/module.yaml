@@ -1,0 +1,5 @@
+name: user-management
+version: 0.1.0
+description: Liste users admin avec actions (suspend, edit role)
+status: spec_only
+maintainer: factory-core

@@ -1,0 +1,11 @@
+{
+  "user_id": "user_demo_123",
+  "job_id": "job_demo_456",
+  "product_id": "playlistbrief",
+  "input": {
+    "playlist_url": "https://www.youtube.com/playlist?list=PLxxxxxxxx",
+    "summary_depth": "détaillé",
+    "language": "fr",
+    "include_timestamps": true
+  }
+}

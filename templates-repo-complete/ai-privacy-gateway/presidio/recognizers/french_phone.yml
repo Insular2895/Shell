@@ -1,0 +1,21 @@
+# Presidio recognizer - French phone numbers
+recognizers:
+  - name: french_phone_recognizer
+    supported_language: fr
+    supported_entity: PHONE_NUMBER_FR
+    patterns:
+      - name: french_mobile_with_prefix
+        regex: '\+33\s?[67](?:[\s.-]?\d{2}){4}'
+        score: 0.95
+      - name: french_mobile_local
+        regex: '\b0[67](?:[\s.-]?\d{2}){4}\b'
+        score: 0.90
+      - name: french_landline
+        regex: '\b0[1-5](?:[\s.-]?\d{2}){4}\b'
+        score: 0.85
+    context:
+      - téléphone
+      - tél
+      - portable
+      - mobile
+      - phone

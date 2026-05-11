@@ -1,0 +1,40 @@
+# ops-autopilot/decision-engine/action-policy.yml
+#
+# Décisions que l'autopilot peut prendre seul vs celles qui demandent humain.
+# DOIT être cohérent avec agent-quality-system/policies/approval-policy.yml.
+
+auto_allowed:
+  - set_feature_degraded                # ex: désactive PDF extraction si erreur taux > X
+  - show_maintenance_block              # bandeau site
+  - pause_worker                        # ex: arrête un worker Fly trop chargé
+  - reduce_ai_model                     # bascule vers modèle moins cher
+  - create_ticket                       # vers Plane / decision_queue
+  - notify_owner                        # email / Slack
+  - block_invalid_data_export           # bloque un export non conforme
+  - increase_alert_threshold_temporarily
+
+approval_required:                      # action effectuée mais ticket en parallèle
+  - upgrade_provider_quota              # ex: passer à un tier supérieur Supabase
+  - create_emergency_replica            # ex: dupliquer DB en lecture
+
+ask_before:                             # rien tant qu'humain n'a pas confirmé
+  - deploy_to_production
+  - run_database_migration
+  - upgrade_paid_plan_long_term
+  - delete_data
+  - rollback_database
+  - change_billing_config
+  - export_sellable_dataset
+
+severity_to_action:
+  P0:
+    - notify_owner
+    - create_incident
+    - set_feature_degraded   # selon zone affectée
+  P1:
+    - notify_owner
+    - create_incident
+  P2:
+    - create_ticket
+  P3:
+    - log_only

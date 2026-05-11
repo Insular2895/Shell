@@ -1,0 +1,68 @@
+# engine/manifest.yaml
+#
+# Décrit comment le Shell doit faire tourner ce moteur.
+# Le runner.ts lit ce fichier pour savoir s'il faut un Postgres job, un service
+# long-running, des secrets LLM, etc.
+
+id: playlistbrief
+name: PlaylistBrief Engine
+version: 0.1.0
+
+# ----------------------------------------------------------------------------
+# MODE
+#   job     : one-shot, input → traitement → output → fin
+#   service : long-running (proxy, monitoring, scraping continu...)
+# ----------------------------------------------------------------------------
+mode: job
+
+# ----------------------------------------------------------------------------
+# RUNTIME
+#   docker : image lancée à la demande
+#   http   : service distant déjà déployé, appelé via HTTP
+# ----------------------------------------------------------------------------
+runtime:
+  type: docker
+  image: ghcr.io/insular2895/playlistbrief-engine:latest
+  entrypoint: ['python', 'run_engine.py']
+  args: ['--input', '/data/input.json', '--output', '/data/output.json']
+
+# ----------------------------------------------------------------------------
+# RESOURCES
+# Chaque flag à `true` provisionne quelque chose côté infra.
+# Mets à `false` ce qui n'est pas nécessaire pour économiser.
+# ----------------------------------------------------------------------------
+resources:
+  needs_postgres: true       # accès lecture/écriture à la DB jobs (default true)
+  needs_redis: false         # queue/cache
+  needs_qdrant: false        # vector DB
+  needs_storage: true        # Supabase Storage pour fichiers générés
+  needs_llm: true            # accès à OPENAI_API_KEY ou ANTHROPIC_API_KEY
+
+# ----------------------------------------------------------------------------
+# LIMITS
+# Caps appliqués par le runner. Au-delà → erreur retournée à l'utilisateur.
+# ----------------------------------------------------------------------------
+limits:
+  max_runtime_seconds: 900       # 15 min
+  max_input_mb: 10
+  max_output_mb: 50
+  max_outputs_per_job: 20
+
+# ----------------------------------------------------------------------------
+# ENVIRONMENT VARIABLES NÉCESSAIRES À L'ENGINE
+# Le runner les injecte dans le container Docker au lancement.
+# Liste uniquement les clés ; les valeurs viennent des secrets Vercel/Supabase.
+# ----------------------------------------------------------------------------
+env:
+  required:
+    - OPENAI_API_KEY
+  optional:
+    - YOUTUBE_API_KEY
+    - SUPABASE_SERVICE_ROLE_KEY   # pour upload des fichiers générés
+
+# ----------------------------------------------------------------------------
+# OBSERVABILITÉ
+# ----------------------------------------------------------------------------
+logging:
+  level: info
+  forward_to: stdout

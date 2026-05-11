@@ -1,0 +1,31 @@
+# automation-packs/n8n/docker-compose.yml
+# n8n self-hosted stack pour back-office automation
+
+version: '3.9'
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports: ["5678:5678"]
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=https
+      - N8N_PORT=5678
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL}
+      - NODE_ENV=production
+      # External secrets (référencés par les workflows)
+      - COCKPIT_URL=${COCKPIT_URL}
+      - COCKPIT_API_TOKEN=${COCKPIT_API_TOKEN}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:

@@ -1,0 +1,5 @@
+name: onboarding
+version: 0.1.0
+description: Wizard multi-step de premier setup
+status: spec_only
+maintainer: factory-core

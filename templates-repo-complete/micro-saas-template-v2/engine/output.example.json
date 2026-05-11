@@ -1,0 +1,55 @@
+{
+  "status": "success",
+  "blocks": [
+    {
+      "type": "text",
+      "title": "Synthèse globale",
+      "content": "Cette playlist couvre les bases de la programmation fonctionnelle, en se concentrant sur l'immutabilité et les fonctions pures. Les vidéos progressent du concept général aux applications concrètes en JavaScript et Python."
+    },
+    {
+      "type": "score",
+      "title": "Score de cohérence",
+      "value": 87,
+      "label": "Très cohérent",
+      "color": "green"
+    },
+    {
+      "type": "table",
+      "title": "Résumé par vidéo",
+      "columns": ["Vidéo", "Durée", "Idées clés"],
+      "rows": [
+        ["Introduction à la FP", "12:34", "Pure functions, immutability"],
+        ["Map / Filter / Reduce", "08:21", "Higher-order functions"],
+        ["Closures et currying", "15:02", "Partial application"]
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Idées clés extraites",
+      "ordered": false,
+      "items": [
+        "Une fonction pure n'a pas d'effet de bord",
+        "L'immutabilité simplifie le raisonnement parallèle",
+        "La composition de fonctions remplace l'héritage"
+      ]
+    },
+    {
+      "type": "file",
+      "title": "Export Markdown complet",
+      "url": "https://storage.example.com/jobs/job_demo_456/summary.md",
+      "mime": "text/markdown",
+      "filename": "summary.md",
+      "sizeBytes": 24576
+    },
+    {
+      "type": "recommendation",
+      "title": "Pour aller plus loin",
+      "message": "Cette playlist est introductive. Considère 'Functional-Light JavaScript' de Kyle Simpson pour approfondir.",
+      "priority": "medium"
+    }
+  ],
+  "metadata": {
+    "durationMs": 142000,
+    "videosProcessed": 3
+  }
+}

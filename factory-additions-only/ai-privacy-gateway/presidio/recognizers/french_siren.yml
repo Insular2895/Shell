@@ -1,0 +1,10 @@
+# Presidio recognizer - French SIREN (9 digits)
+recognizers:
+  - name: french_siren_recognizer
+    supported_language: fr
+    supported_entity: SIREN
+    patterns:
+      - name: siren_pattern
+        regex: '\b\d{3}\s?\d{3}\s?\d{3}\b'
+        score: 0.70
+    context: [siren, entreprise, société]

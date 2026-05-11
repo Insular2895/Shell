@@ -1,0 +1,19 @@
+name: inngest
+version: 0.1.0
+description: |
+  Inngest event-driven workflows. Idéal pour les workflows métier complexes
+  avec étapes conditionnelles, retry par étape, observability.
+
+use_when:
+  - workflows métier complexes (multi-étapes)
+  - event-sourced architecture
+  - durable execution
+
+avoid_when:
+  - simple jobs (utiliser supabase-trigger)
+  - low volume
+
+requirements:
+  env_vars:
+    - INNGEST_EVENT_KEY
+    - INNGEST_SIGNING_KEY

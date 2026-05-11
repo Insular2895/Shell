@@ -1,0 +1,5 @@
+name: feature-flags
+version: 0.1.0
+description: Toggles + targeting par user/cohort/% rollout
+status: spec_only
+maintainer: factory-core

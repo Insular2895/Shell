@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "feature-map (output cleanroom)",
+  "description": "Sortie d'un site:analyze : map des features visibles, abstraite (cleanroom).",
+  "type": "object",
+  "required": ["source", "captured_at", "features"],
+  "properties": {
+    "source": {
+      "type": "object",
+      "required": ["type", "url_or_file"],
+      "properties": {
+        "type": { "enum": ["url", "screenshot", "video"] },
+        "url_or_file": { "type": "string" }
+      }
+    },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "viewport": { "enum": ["desktop", "tablet", "mobile"] },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name_abstract", "user_value", "ui_pattern"],
+        "properties": {
+          "name_abstract": { "type": "string", "description": "ex: 'long-job extraction', PAS le nom du concurrent" },
+          "user_value": { "type": "string" },
+          "ui_pattern": { "type": "string", "description": "ex: 'dropzone + progress + table-result'" },
+          "estimated_runtime": { "enum": ["instant", "short", "medium", "long"] },
+          "backend_capability_needed": { "type": "string" }
+        }
+      }
+    },
+    "cleanroom_check": {
+      "type": "object",
+      "required": ["no_verbatim_text", "no_pixel_perfect", "no_brand_copy"],
+      "properties": {
+        "no_verbatim_text": { "type": "boolean" },
+        "no_pixel_perfect": { "type": "boolean" },
+        "no_brand_copy": { "type": "boolean" },
+        "no_asset_copy": { "type": "boolean" }
+      }
+    }
+  }
+}

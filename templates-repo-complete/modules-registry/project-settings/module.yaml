@@ -1,0 +1,5 @@
+name: project-settings
+version: 0.1.0
+description: Settings UI multi-tab avec save partiel
+status: spec_only
+maintainer: factory-core

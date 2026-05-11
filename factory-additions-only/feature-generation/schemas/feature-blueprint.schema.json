@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "feature-blueprint",
+  "description": "Contrat universel d'une feature à générer.",
+  "type": "object",
+  "required": ["name", "business_objective", "user_flow", "ui_states", "backend"],
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "source": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["screenshot", "url", "text_description", "repo"] },
+        "reference": { "type": "string" },
+        "cleanroom_validated": { "type": "boolean" }
+      },
+      "required": ["type", "cleanroom_validated"]
+    },
+    "business_objective": { "type": "string", "minLength": 20 },
+    "user_flow": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2
+    },
+    "ui_components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "enum": ["form", "list", "card", "modal", "drawer", "table", "chart", "dropzone", "input", "button", "preview"] },
+          "module_ref": { "type": "string", "description": "Module from modules-registry, ex: upload@1.0.0" }
+        }
+      }
+    },
+    "ui_states": {
+      "type": "array",
+      "items": { "enum": ["idle", "loading", "validating", "processing", "completed", "failed", "empty", "degraded", "dragging", "selected", "uploading"] },
+      "minItems": 4
+    },
+    "backend": {
+      "type": "object",
+      "required": ["pattern", "endpoints"],
+      "properties": {
+        "pattern": { "enum": ["crud-simple", "long-job", "service-realtime", "scheduled"] },
+        "pack_ref": { "type": "string", "description": "Pack from backend-packs, ex: supabase-trigger" },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["method", "path"],
+            "properties": {
+              "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+              "path": { "type": "string" },
+              "auth": { "enum": ["none", "user", "admin", "worker_token", "service_token"] }
+            }
+          }
+        }
+      }
+    },
+    "background_job": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "trigger": { "enum": ["api_call", "cron", "webhook"] },
+        "max_duration_minutes": { "type": "integer" },
+        "retries": { "type": "integer" },
+        "fallback_block": { "type": "string" }
+      }
+    },
+    "data_model": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["table", "columns"],
+        "properties": {
+          "table": { "type": "string" },
+          "columns": { "type": "array" }
+        }
+      }
+    },
+    "security_rules": {
+      "type": "object",
+      "properties": {
+        "input_validation": { "type": "boolean" },
+        "rate_limit_per_user_per_min": { "type": "integer" },
+        "upload_policy_ref": { "type": "string" },
+        "pii_handling": { "enum": ["none", "redact", "pseudonymize"] },
+        "consent_required": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "properties": {
+        "unit": { "type": "array", "items": { "type": "string" } },
+        "integration": { "type": "array", "items": { "type": "string" } },
+        "security": { "type": "array", "items": { "type": "string" } },
+        "failure_cases": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

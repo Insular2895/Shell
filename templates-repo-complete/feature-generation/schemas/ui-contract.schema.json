@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ui-contract",
+  "description": "Contrat de l'UI d'une feature.",
+  "type": "object",
+  "required": ["components", "states"],
+  "properties": {
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "props", "events"],
+        "properties": {
+          "name": { "type": "string" },
+          "module_ref": { "type": "string" },
+          "props": { "type": "array" },
+          "events": { "type": "array" }
+        }
+      }
+    },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["state", "trigger", "ui_changes"],
+        "properties": {
+          "state": { "type": "string" },
+          "trigger": { "type": "string" },
+          "ui_changes": { "type": "array" }
+        }
+      }
+    },
+    "responsive_breakpoints": {
+      "type": "array",
+      "items": { "enum": ["mobile", "tablet", "desktop"] }
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "wcag_level": { "enum": ["A", "AA", "AAA"] },
+        "keyboard_navigation": { "type": "boolean" },
+        "screen_reader_tested": { "type": "boolean" }
+      }
+    }
+  }
+}

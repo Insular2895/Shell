@@ -1,0 +1,4 @@
+name: nestjs-prisma
+version: 0.1.0
+description: nestjs-prisma backend pattern (scaffold — to detail phase 2-3)
+status: spec_only

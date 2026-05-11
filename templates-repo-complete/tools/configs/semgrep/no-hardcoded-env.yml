@@ -1,0 +1,17 @@
+rules:
+  - id: no-hardcoded-supabase-key
+    pattern-either:
+      - pattern: '"sb_secret_$X"'
+      - pattern: '"eyJhbGciOiJIUzI1NiI...$X"'
+    message: |
+      Hardcoded Supabase key detected. Use process.env.SUPABASE_SERVICE_ROLE_KEY.
+    languages: [javascript, typescript]
+    severity: ERROR
+  - id: no-hardcoded-stripe-key
+    pattern-either:
+      - pattern: '"sk_live_$X"'
+      - pattern: '"sk_test_$X"'
+    message: |
+      Hardcoded Stripe key. Use process.env.STRIPE_SECRET_KEY.
+    languages: [javascript, typescript]
+    severity: ERROR

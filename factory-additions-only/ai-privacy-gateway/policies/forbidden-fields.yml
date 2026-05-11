@@ -1,0 +1,32 @@
+# ai-privacy-gateway/policies/forbidden-fields.yml
+# Champs INTERDITS dans les prompts LLM, même si en clair.
+
+forbidden_in_prompts:
+  - email
+  - phone
+  - first_name
+  - last_name
+  - full_name
+  - address
+  - postal_code
+  - ssn
+  - iban
+  - credit_card
+  - cvv
+  - password
+  - api_key
+  - jwt_token
+  - oauth_secret
+  - session_id
+  - private_ip
+  - mac_address
+  - device_fingerprint
+  - biometric_data
+  - health_data
+  - religion
+  - sexual_orientation
+  - political_opinion
+
+# Si détecté dans un prompt :
+# - alerte critique (Sentry P0)
+# - le prompt est BLOQUÉ avant envoi (defense-in-depth)

@@ -1,0 +1,59 @@
+# ops-packs/deployment/coolify/docker-compose.example.yml
+#
+# Stack production Coolify pour un site Tier 2 (VPS Hetzner avec Coolify).
+# Coolify déploie depuis git, gère HTTPS via Caddy, et fait les backups.
+
+version: '3.9'
+
+services:
+  app:
+    image: ghcr.io/__USER__/__REPO__:latest
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - WORKER_API_TOKEN=${WORKER_API_TOKEN}
+      - CRON_SECRET=${CRON_SECRET}
+      - ENGINE_MODE=http
+      - ENGINE_URL=http://engine:8080/run
+    labels:
+      - coolify.managed=true
+      - coolify.healthcheck.path=/api/health
+    networks: [internal]
+    depends_on:
+      - engine
+
+  engine:
+    image: ghcr.io/__USER__/__REPO__-engine:latest
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=200m
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SHELL_INTERNAL_URL=http://app:3000
+      - SHELL_SERVICE_TOKEN=${SHELL_SERVICE_TOKEN}
+    networks: [internal]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  worker:
+    image: ghcr.io/__USER__/__REPO__-worker:latest
+    restart: unless-stopped
+    environment:
+      - SHELL_URL=http://app:3000
+      - WORKER_API_TOKEN=${WORKER_API_TOKEN}
+      - LEASE_SECONDS=900
+      - POLL_INTERVAL_SECONDS=5
+    networks: [internal]
+    depends_on:
+      - app
+
+networks:
+  internal:
+    driver: bridge

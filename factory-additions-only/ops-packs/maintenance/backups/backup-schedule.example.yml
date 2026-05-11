@@ -1,0 +1,22 @@
+# Backup schedule — restic
+# Variables : RESTIC_REPOSITORY, RESTIC_PASSWORD, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+
+jobs:
+  - name: postgres-daily
+    schedule: "0 2 * * *"
+    command: |
+      pg_dump $DATABASE_URL --no-owner --no-acl | \
+      restic backup --stdin --stdin-filename "postgres-$(date +%Y%m%d).sql" \
+        --tag postgres --tag daily
+
+  - name: storage-daily
+    schedule: "30 2 * * *"
+    command: |
+      restic backup /var/lib/storage \
+        --tag storage --tag daily \
+        --exclude '*.tmp' --exclude '*.log'
+
+  - name: forget-old-snapshots
+    schedule: "0 4 * * 0"  # weekly Sunday 4am
+    command: |
+      restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --keep-yearly 2 --prune

@@ -1,0 +1,44 @@
+name: supabase-trigger
+version: 1.0.0
+description: |
+  Backend pour features avec long-running jobs.
+  Combine Supabase (auth, DB, storage, RLS) + queue Postgres SKIP LOCKED + worker externe.
+  Variante : Trigger.dev managé pour les jobs.
+
+stack:
+  database: postgres-supabase
+  auth: supabase-auth
+  storage: supabase-storage
+  jobs: postgres-skip-locked + worker (ou triggerdev managé)
+  validation: zod (TS) + pydantic (Python si engine externe)
+
+use_when:
+  - upload + traitement long (extraction document, génération vidéo, etc.)
+  - features qui prennent > 10s
+  - besoin de retry, lease, timeout
+  - UX async (frontend poll status)
+
+avoid_when:
+  - CRUD simple sans tâche longue → supabase-basic
+  - real-time multi-user collab → autre stack
+  - ML training → infra dédiée
+
+requirements:
+  env_vars:
+    - NEXT_PUBLIC_SUPABASE_URL
+    - SUPABASE_SERVICE_ROLE_KEY
+    - WORKER_API_TOKEN
+    - CRON_SECRET
+
+contracts:
+  input: contracts/input.schema.ts
+  output: contracts/output.schema.ts
+
+security_rules: security-rules.md
+
+example_implementations:
+  - micro-saas-template-v2/   # implémentation complète, worker Python, queue Postgres SKIP LOCKED, auto-degrade
+
+related_modules:
+  - upload@1.0.0
+  - document-extraction@1.0.0

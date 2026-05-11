@@ -1,0 +1,38 @@
+{
+  "_comment": "Splink config — phase 6 implementation. Edit then run via run-resolution.py.",
+  "link_type": "dedupe_only",
+  "blocking_rules_to_generate_predictions": [
+    "l.email_hash = r.email_hash",
+    "l.phone_hash = r.phone_hash",
+    "l.first_name = r.first_name and l.last_name = r.last_name and substr(l.email_hash, 1, 4) = substr(r.email_hash, 1, 4)"
+  ],
+  "comparisons": [
+    {
+      "column_name": "email_hash",
+      "comparison_levels": [
+        { "label": "exact_match", "match_probability": 0.99 },
+        { "label": "no_match", "match_probability": 0.01 }
+      ]
+    },
+    {
+      "column_name": "phone_hash",
+      "comparison_levels": [
+        { "label": "exact_match", "match_probability": 0.95 },
+        { "label": "no_match", "match_probability": 0.05 }
+      ]
+    },
+    {
+      "column_name": "name",
+      "comparison_levels": [
+        { "label": "exact_match", "match_probability": 0.85 },
+        { "label": "fuzzy_match_jaro_winkler_gt_0_8", "match_probability": 0.6 },
+        { "label": "no_match", "match_probability": 0.2 }
+      ]
+    }
+  ],
+  "_thresholds": {
+    "auto_merge_above": 0.90,
+    "review_between": [0.70, 0.90],
+    "ignore_below": 0.70
+  }
+}

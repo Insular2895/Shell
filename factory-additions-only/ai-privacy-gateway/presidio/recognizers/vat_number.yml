@@ -1,0 +1,10 @@
+# Presidio recognizer - EU VAT numbers
+recognizers:
+  - name: vat_number_recognizer
+    supported_language: any
+    supported_entity: VAT_NUMBER
+    patterns:
+      - name: vat_eu
+        regex: '\b(FR|DE|BE|IT|ES|NL|LU|PT|AT|GB)[A-Z0-9]{2,12}\b'
+        score: 0.85
+    context: [tva, vat, n° intracom]

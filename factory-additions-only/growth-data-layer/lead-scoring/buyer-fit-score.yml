@@ -1,0 +1,38 @@
+# growth-data-layer/lead-scoring/buyer-fit-score.yml
+# Configuré par buyer_id dans la table buyers.allowed_categories etc.
+# Ce fichier est un EXEMPLE générique.
+
+scoring:
+  industry:
+    saas: 30
+    ecommerce: 25
+    agency: 25
+    consulting: 20
+    other: 5
+
+  size_range:
+    "11-50": 20
+    "51-200": 25
+    "201-500": 20
+    "1-10": 10
+    "501+": 15
+
+  country:
+    FR: 15
+    BE: 10
+    CH: 10
+    DE: 8
+    other_EU: 5
+    non_EU: 0
+
+  tech_stack:
+    has_shopify: 20
+    has_klaviyo: 15
+    has_salesforce: 15
+    has_hubspot: 12
+
+  budget_range:
+    "5-20k": 15
+    "20k+": 15
+    "1-5k": 5
+    "<1k": 0

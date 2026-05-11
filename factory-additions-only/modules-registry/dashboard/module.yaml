@@ -1,0 +1,5 @@
+name: dashboard
+version: 0.1.0
+description: Layout dashboard standard + widgets génériques
+status: spec_only
+maintainer: factory-core

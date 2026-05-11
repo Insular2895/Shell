@@ -1,0 +1,113 @@
+# agent-quality-system/policies/approval-policy.yml
+#
+# Définit ce qu'un agent IA peut faire seul vs ce qui demande validation humaine.
+# Source de vérité globale. Tout agent (Claude, Codex, dev-orchestrator, n8n)
+# applique cette policy AVANT toute action.
+#
+# Catégories :
+#   auto_allowed       → fait sans demander
+#   review_after       → fait, puis review humaine demandée (ne bloque pas le flow)
+#   ask_before         → demande confirmation explicite avant exécution
+#   blocked_without_manual → impossible sans intervention humaine en dehors de l'agent
+
+auto_allowed:
+  # Lecture / exploration
+  - read_files
+  - search_repo
+  - run_tests
+  - run_lint
+  - run_typecheck
+  - run_security_scan_local
+
+  # Création / modif sans risque
+  - create_feature_spec
+  - generate_docs
+  - update_tests
+  - fix_typescript_error
+  - fix_lint_warning
+  - add_loading_state
+  - add_error_state
+  - add_empty_state
+  - add_unit_test
+
+  # Git local
+  - create_local_branch
+  - commit_local
+  - open_draft_pr
+
+  # Ops basse intensité
+  - update_feature_flag_to_degraded
+  - create_ticket
+  - generate_n8n_draft_workflow
+  - notify_owner
+  - block_invalid_data_export      # ← blocage bénéfique, toujours auto
+  - generate_audit_report
+
+review_after:
+  # Modifs code mid-risque (CI les rattrape)
+  - modify_component
+  - modify_api_route
+  - add_small_dependency_via_pinned_version
+  - update_markdown_rules
+  - create_backend_contract
+  - generate_migration_draft        # crée le SQL mais NE l'applique PAS
+  - publish_module_minor_version    # bump 1.x.0 → 1.x+1.0 (semver minor)
+  - publish_pack_minor_version
+
+ask_before:
+  # Auth / billing / data : DOIT être validé par humain
+  - change_auth_logic
+  - change_billing_logic
+  - change_database_schema
+  - run_database_migration          # exécution du SQL en prod ou staging long
+  - deploy_to_production
+  - deploy_to_staging_for_release   # staging temporaire OK, mais "release" non
+  - rollback_production
+  - change_security_policy
+  - change_env_variables
+  - change_secrets
+  - touch_template_core             # ex: lib/, middleware.ts d'un template
+  - upgrade_paid_plan               # passer un service en payant
+  - export_sellable_dataset
+  - publish_module_major_version    # 1.x.x → 2.0.0 (breaking)
+  - install_new_third_party_service
+  - sign_buyer_contract
+  - send_email_to_user_segment      # marketing/transac externe
+
+blocked_without_manual:
+  # Actions destructrices ou hors-périmètre IA
+  - delete_customer_data
+  - expose_secrets
+  - disable_security_scans
+  - disable_consent_gate
+  - disable_export_gate
+  - push_directly_to_main
+  - merge_pr_with_failing_checks
+  - change_payment_logic_in_prod
+  - run_destructive_command         # rm -rf, drop table, etc.
+  - sell_data_without_valid_consent # toujours bloqué, manual ne change rien
+  - bypass_cleanroom_policy
+  - import_third_party_code_without_license_check
+  - modify_consent_ledger_rows      # append-only DB-level
+  - modify_lead_delivery_log_rows   # append-only DB-level
+
+# ============================================================================
+# Règles transverses
+# ============================================================================
+
+rules:
+  - name: "Toute action ask_before nécessite que l'agent produise une PR draft + question, pas un merge."
+  - name: "Toute action review_after produit une PR avec label 'review-required'."
+  - name: "Une action qui n'est dans aucune liste est traitée comme ask_before par défaut (fail-safe)."
+  - name: "Les actions blocked_without_manual sont aussi vérifiées au niveau DB/CI, pas seulement par l'agent (defense-in-depth)."
+  - name: "L'agent NE PEUT PAS éditer ce fichier seul. Toute modif passe par PR humain."
+
+# ============================================================================
+# Implémentation côté CI
+# ============================================================================
+
+# Ce fichier est lu par :
+#   .github/workflows/approval-policy-check.yml  → vérifie label PR
+#   tools/scanners/policy-check.sh               → vérifie patterns dans le diff
+#   factory-control-center/api/decisions.route.ts → traite la decision_queue
+#   ops-autopilot/decision-engine/action-policy.yml → règles d'autopilot

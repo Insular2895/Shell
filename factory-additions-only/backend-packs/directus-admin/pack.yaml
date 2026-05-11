@@ -1,0 +1,4 @@
+name: directus-admin
+version: 0.1.0
+description: directus-admin backend pattern (scaffold — to detail phase 2-3)
+status: spec_only

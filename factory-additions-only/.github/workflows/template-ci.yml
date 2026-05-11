@@ -1,0 +1,42 @@
+# .github/workflows/template-ci.yml
+# CI pour les templates SaaS (ex: micro-saas-template-v2).
+
+name: Template CI
+
+on:
+  pull_request:
+    paths:
+      - 'micro-saas-template-v2/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: micro-saas-template-v2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: micro-saas-template-v2/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+        env:
+          # Vars factices pour build (vrai déploiement les surcharge)
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_xxx
+          SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.xxx
+          STRIPE_SECRET_KEY: sk_test_xxx
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_xxx
+          STRIPE_WEBHOOK_SECRET: whsec_xxx
+          ENGINE_MODE: mock
+          WORKER_API_TOKEN: xxx
+          CRON_SECRET: xxx

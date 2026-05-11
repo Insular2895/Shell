@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "security-rules",
+  "type": "object",
+  "properties": {
+    "authentication": {
+      "type": "object",
+      "properties": {
+        "required": { "type": "boolean" },
+        "providers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "properties": {
+        "rls_enabled": { "type": "boolean" },
+        "min_role": { "enum": ["anon", "user", "admin", "service_role"] }
+      }
+    },
+    "input_validation": {
+      "type": "object",
+      "properties": {
+        "client_side": { "enum": ["zod", "ajv", "yup"] },
+        "server_side": { "enum": ["zod", "ajv", "pydantic"] },
+        "max_payload_kb": { "type": "integer" }
+      }
+    },
+    "rate_limiting": {
+      "type": "object",
+      "properties": {
+        "per_user_per_minute": { "type": "integer" },
+        "per_ip_per_minute": { "type": "integer" }
+      }
+    },
+    "upload_security": {
+      "type": "object",
+      "properties": {
+        "allowed_mimes": { "type": "array" },
+        "max_size_mb": { "type": "integer" },
+        "antivirus": { "type": "boolean" }
+      }
+    },
+    "pii_handling": {
+      "type": "object",
+      "properties": {
+        "redact_in_logs": { "type": "boolean" },
+        "redact_before_llm": { "type": "boolean" },
+        "consent_required_categories": { "type": "array" }
+      }
+    },
+    "secrets_used": {
+      "type": "array",
+      "items": { "type": "string", "description": "Env var name (no value)" }
+    }
+  }
+}

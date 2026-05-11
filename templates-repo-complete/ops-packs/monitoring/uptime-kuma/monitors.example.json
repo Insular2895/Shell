@@ -1,0 +1,45 @@
+[
+  {
+    "name": "site-prod-health",
+    "type": "http",
+    "url": "https://__SITE_URL__/api/health",
+    "interval": 60,
+    "retryInterval": 60,
+    "maxretries": 2,
+    "accepted_statuscodes": ["200-299"],
+    "notificationIDs": ["owner-email", "slack-ops"]
+  },
+  {
+    "name": "site-prod-homepage",
+    "type": "http",
+    "url": "https://__SITE_URL__",
+    "interval": 300,
+    "accepted_statuscodes": ["200-299"]
+  },
+  {
+    "name": "engine-tcp",
+    "type": "tcp",
+    "hostname": "__ENGINE_HOST__",
+    "port": 8080,
+    "interval": 120
+  },
+  {
+    "name": "worker-claim-flow",
+    "type": "http",
+    "url": "https://__SITE_URL__/api/jobs/worker/claim",
+    "method": "POST",
+    "headers": {"Authorization": "Bearer __WORKER_API_TOKEN__"},
+    "body": "{\"worker_id\":\"uptime-test\",\"lease_seconds\":10}",
+    "interval": 600,
+    "accepted_statuscodes": ["200-299", "204"]
+  },
+  {
+    "name": "stripe-webhook-up",
+    "type": "http",
+    "url": "https://__SITE_URL__/api/stripe/webhook",
+    "method": "POST",
+    "interval": 600,
+    "accepted_statuscodes": ["400"],
+    "comment": "expects 400 (bad signature) when probed without valid Stripe sig — proves endpoint is up"
+  }
+]

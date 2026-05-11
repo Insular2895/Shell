@@ -1,0 +1,19 @@
+# Presidio self-hosted setup
+# Lance via : docker-compose -f ai-privacy-gateway/presidio/docker-compose.yml up -d
+version: '3.9'
+services:
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    ports:
+      - "127.0.0.1:5001:3000"
+    environment:
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:3000 --workers=2
+    volumes:
+      - ./recognizers:/recognizers:ro
+
+  presidio-anonymizer:
+    image: mcr.microsoft.com/presidio-anonymizer:latest
+    ports:
+      - "127.0.0.1:5002:3000"
+    environment:
+      - GUNICORN_CMD_ARGS=--bind=0.0.0.0:3000 --workers=2

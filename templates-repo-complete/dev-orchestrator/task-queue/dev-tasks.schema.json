@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dev-task",
+  "type": "object",
+  "required": ["id", "title", "type", "status", "risk_level"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "description": "ex: TASK-0042" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "add_test", "fix_typescript", "add_loading_state", "add_error_state",
+        "create_component", "create_api_route", "create_worker", "create_module",
+        "feature_spec_from_url", "feature_spec_from_screenshot",
+        "doc_update", "security_finding", "n8n_workflow_draft"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "review_required", "completed", "failed", "cancelled"]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Détermine le routing : low/medium = auto, high = review_required, critical = humain"
+    },
+    "assigned_agent": {
+      "type": "string",
+      "description": "ex: 'claude-code' | 'codex' | 'human:user_id'"
+    },
+    "skills_required": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "files_in_scope": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Liste des fichiers que l'agent peut toucher (max 8 par tâche)"
+    },
+    "max_attempts": { "type": "integer", "default": 2 },
+    "max_duration_minutes": { "type": "integer", "default": 45 },
+    "context_packet_url": { "type": "string", "description": "Vers context-engine/packets/" },
+    "approval_required": {
+      "type": "boolean",
+      "description": "true si l'action est dans ask_before de approval-policy"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "pr_url": { "type": "string" },
+    "report_url": { "type": "string" }
+  }
+}

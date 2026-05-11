@@ -1,0 +1,50 @@
+{
+  "$schema": "./run.schema.meta.json",
+  "title": "Résumer une playlist YouTube",
+  "description": "Collez une URL de playlist publique YouTube et choisissez le niveau de résumé souhaité.",
+  "submitLabel": "Lancer le résumé",
+  "estimatedRuntime": "2 à 5 minutes",
+  "inputs": [
+    {
+      "key": "playlist_url",
+      "type": "url",
+      "label": "URL de la playlist",
+      "placeholder": "https://www.youtube.com/playlist?list=...",
+      "required": true,
+      "validation": {
+        "pattern": "^https?://(www\\.)?youtube\\.com/playlist\\?list=.+",
+        "errorMessage": "Doit être une URL de playlist YouTube valide."
+      }
+    },
+    {
+      "key": "summary_depth",
+      "type": "select",
+      "label": "Niveau de résumé",
+      "required": true,
+      "default": "rapide",
+      "options": [
+        { "value": "rapide", "label": "Rapide (3-5 phrases par vidéo)" },
+        { "value": "détaillé", "label": "Détaillé (1 paragraphe par vidéo)" },
+        { "value": "expert", "label": "Expert (analyse approfondie + insights)" }
+      ]
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": "Langue de sortie",
+      "required": true,
+      "default": "fr",
+      "options": [
+        { "value": "fr", "label": "Français" },
+        { "value": "en", "label": "English" },
+        { "value": "es", "label": "Español" }
+      ]
+    },
+    {
+      "key": "include_timestamps",
+      "type": "boolean",
+      "label": "Inclure les timestamps des moments clés",
+      "default": true
+    }
+  ]
+}

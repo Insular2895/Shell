@@ -1,0 +1,5 @@
+name: admin-panel
+version: 0.1.0
+description: CRUD admin générique avec auth admin uniquement
+status: spec_only
+maintainer: factory-core

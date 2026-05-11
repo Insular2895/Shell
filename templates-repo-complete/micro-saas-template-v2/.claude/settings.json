@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/block-destructive.sh" }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|create_file|str_replace",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/scan-secrets.sh" }
+        ]
+      }
+    ]
+  }
+}

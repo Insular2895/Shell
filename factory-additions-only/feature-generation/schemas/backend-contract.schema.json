@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "backend-contract",
+  "type": "object",
+  "required": ["pack", "endpoints"],
+  "properties": {
+    "pack": { "type": "string", "description": "ex: supabase-trigger" },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["method", "path", "request_schema", "response_schema"],
+        "properties": {
+          "method": { "type": "string" },
+          "path": { "type": "string" },
+          "auth": { "type": "string" },
+          "request_schema": { "type": "object" },
+          "response_schema": { "type": "object" },
+          "rate_limit": { "type": "string" },
+          "idempotent": { "type": "boolean" }
+        }
+      }
+    },
+    "database_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operation", "table"],
+        "properties": {
+          "operation": { "enum": ["create_table", "alter_table", "create_view", "create_index", "create_function"] },
+          "table": { "type": "string" },
+          "migration_file": { "type": "string" }
+        }
+      }
+    },
+    "external_calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "service": { "type": "string" },
+          "purpose": { "type": "string" },
+          "via_ai_privacy_gateway": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

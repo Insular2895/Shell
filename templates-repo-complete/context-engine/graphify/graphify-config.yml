@@ -1,0 +1,28 @@
+# context-engine/graphify/graphify-config.yml
+# Config pour générer le graph du repo via Graphify (ou tree-sitter custom).
+
+input:
+  paths:
+    - "micro-saas-template-v2/"
+    - "modules-registry/"
+    - "backend-packs/"
+    - "factory-control-center/"
+    - "ai-privacy-gateway/src/"
+  exclude:
+    - "node_modules/"
+    - ".next/"
+    - "dist/"
+    - "*.test.ts"
+
+extract:
+  - imports               # quel fichier importe quoi
+  - exports               # quels symbols sont exportés
+  - api_routes            # routes Next.js détectées
+  - react_components      # composants détectés
+  - sql_tables            # tables détectées dans .sql
+  - function_signatures   # types et signatures des exports
+
+output:
+  format: json
+  path: context-engine/repo-graph/graph.json
+  include_summary: true

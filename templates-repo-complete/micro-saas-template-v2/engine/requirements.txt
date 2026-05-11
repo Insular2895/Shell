@@ -1,0 +1,12 @@
+# Deps de base communes à tous les moteurs.
+# - requests : pour upload via /api/upload
+# - pydantic : validation stricte des inputs côté engine (defense-in-depth)
+
+requests>=2.31.0,<3.0
+pydantic>=2.5,<3.0
+
+# === Deps spécifiques au produit ===
+# (ex pour PlaylistBrief)
+# yt-dlp>=2024.1.0
+# openai>=1.40.0
+# youtube-transcript-api>=0.6.2

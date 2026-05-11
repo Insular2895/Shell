@@ -1,0 +1,5 @@
+name: analytics
+version: 0.1.0
+description: Tracking propre + dashboards (anonymisé selon consent)
+status: spec_only
+maintainer: factory-core

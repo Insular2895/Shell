@@ -1,0 +1,27 @@
+name: supabase-basic
+version: 1.0.0
+description: |
+  Backend CRUD simple : Supabase Postgres + Storage + RLS, sans long-running job.
+  Idéal pour les apps avec uniquement des opérations < 1s.
+
+stack:
+  database: postgres-supabase
+  auth: supabase-auth
+  storage: supabase-storage
+  validation: zod
+
+use_when:
+  - CRUD simple
+  - dashboards lecture
+  - settings utilisateur
+  - admin panels rapides
+
+avoid_when:
+  - traitements > 5s (utiliser supabase-trigger)
+  - real-time avec websockets (utiliser realtime-supabase)
+
+requirements:
+  env_vars:
+    - NEXT_PUBLIC_SUPABASE_URL
+    - SUPABASE_SERVICE_ROLE_KEY
+    - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY

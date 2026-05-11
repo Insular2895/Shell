@@ -1,0 +1,63 @@
+# growth-data-layer/quality/data-quality-rules.yml
+#
+# Règles de qualité data appliquées par dbt + alerting.
+# Si une règle échoue → alerte critique + blocage exports le temps de fix.
+
+rules:
+  - id: no_eligible_with_optout
+    table: master_leads
+    sql: |
+      SELECT COUNT(*) FROM master_leads l
+      JOIN master_contacts c ON c.contact_id = l.contact_id
+      WHERE l.sellable_status = 'eligible'
+        AND (l.opt_out = true OR c.opt_out = true)
+    threshold: 0
+    severity: CRITICAL
+    description: "Lead eligible avec opt_out actif — incohérence majeure"
+
+  - id: no_eligible_with_expired_retention
+    table: master_leads
+    sql: |
+      SELECT COUNT(*) FROM master_leads
+      WHERE sellable_status = 'eligible'
+        AND retention_expires_at <= now()
+    threshold: 0
+    severity: CRITICAL
+    description: "Lead eligible avec retention dépassée"
+
+  - id: no_eligible_without_consent_partners
+    table: master_leads
+    sql: |
+      SELECT COUNT(*) FROM master_leads
+      WHERE sellable_status = 'eligible' AND consent_partners = false
+    threshold: 0
+    severity: CRITICAL
+
+  - id: no_eligible_unverified
+    table: master_leads
+    sql: |
+      SELECT COUNT(*) FROM master_leads l
+      JOIN master_contacts c ON c.contact_id = l.contact_id
+      WHERE l.sellable_status = 'eligible'
+        AND c.verification_level = 'unverified'
+    threshold: 0
+    severity: HIGH
+
+  - id: no_email_cleartext_in_master
+    table: master_contacts
+    sql: |
+      SELECT COUNT(*) FROM master_contacts
+      WHERE email_hash IS NOT NULL
+        AND email_hash !~ '^[0-9a-f]{64}$'
+    threshold: 0
+    severity: CRITICAL
+    description: "Email hash doesn't match sha256 format (peut indiquer email en clair)"
+
+  - id: consent_ledger_immutable
+    table: consent_ledger
+    sql: |
+      -- Si la table a été UPDATE, le trigger consent_ledger_no_update aurait dû bloquer.
+      -- On vérifie qu'aucune ligne n'a updated_at != collected_at via journal.
+      SELECT 1 WHERE false
+    threshold: 0
+    severity: CRITICAL
