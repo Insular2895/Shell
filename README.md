@@ -1,663 +1,627 @@
 # Shell
 
-**Shell est une factory SaaS modulaire pour transformer des repos métiers en micro-SaaS déployables.**
+> **Transformer des repos métiers en micro-SaaS déployables — template d'abord, automation ensuite.**
 
-Tu pars d'un repo Python (ou d'une idée, d'un screenshot, d'une URL) — tu ressors avec un SaaS complet : auth, billing, worker, monitoring, sécurité, data.
+---
+
+L'objectif n'est pas de construire toute la factory automatique dès le départ.
+
+```
+Template-first, automation later.
+
+  1. Stabiliser un Shell fixe.
+  2. Créer un template produit réutilisable.
+  3. Brancher un premier repo pilote à la main.
+  4. Comprendre ce qui revient à chaque fois.
+  5. Transformer ces répétitions en modules.
+  6. Automatiser seulement après plusieurs cas réels.
+```
+
+> On ne construit pas directement une méga-usine abstraite.
+> On construit d'abord un moule propre, on le teste sur un vrai repo,
+> puis on améliore ce moule produit après produit.
 
 ---
 
 ## Table des matières
 
-1. [Le concept central](#1-le-concept-central)
-2. [Architecture Shell / Engine](#2-architecture-shell--engine)
-3. [Créer un produit de A à Z](#3-créer-un-produit-de-a-à-z)
-4. [Le pipeline RUN en détail](#4-le-pipeline-run-en-détail)
-5. [Déployer un produit](#5-déployer-un-produit)
-6. [Le pipeline screenshot → module](#6-le-pipeline-screenshot--module)
-7. [Les 18 briques de la factory](#7-les-18-briques-de-la-factory)
-8. [Les règles qui gouvernent tout](#8-les-règles-qui-gouvernent-tout)
-9. [Ce que les agents peuvent faire](#9-ce-que-les-agents-peuvent-faire)
-10. [Phases de finalisation](#10-phases-de-finalisation)
+1. [Vision](#1-vision)
+2. [Stratégie actuelle : template-first](#2-stratégie-actuelle--template-first)
+3. [Architecture Shell / Engine](#3-architecture-shell--engine)
+4. [Ce qui est fixe vs ce qui change](#4-ce-qui-est-fixe-vs-ce-qui-change)
+5. [Créer un produit à partir d'un repo](#5-créer-un-produit-à-partir-dun-repo)
+6. [Contrat universel RUN](#6-contrat-universel-run)
+7. [Premier objectif concret](#7-premier-objectif-concret)
+8. [Pipeline screenshot → module](#8-pipeline-screenshot--module)
+9. [Statut réel des briques](#9-statut-réel-des-briques)
+10. [Règles agents et sécurité](#10-règles-agents-et-sécurité)
+11. [Roadmap de construction](#11-roadmap-de-construction)
+12. [Fichiers à lire en premier](#12-fichiers-à-lire-en-premier)
 
 ---
 
-## 1. Le concept central
+## 1. Vision
 
-Le système repose sur une séparation stricte entre **le Shell** et **le moteur**.
+Shell sert à créer des **micro-SaaS à partir de repos métiers existants**.
 
-```
-┌─────────────────────────────────────┐   ┌─────────────────────┐
-│             SHELL (fixe)            │   │    ENGINE (change)   │
-│                                     │   │                      │
-│  Next.js + Supabase + Stripe        │   │  repo Python métier  │
-│  auth · billing · jobs · UI         │   │  adapter.py          │
-│  run.schema.json → formulaire auto  │   │  run_engine.py       │
-│  ResultBlocks → rendu auto          │   │  Dockerfile          │
-│                                     │   │                      │
-│  NE CHANGE PAS entre produits       │   │  CHANGE par produit  │
-└─────────────────────────────────────┘   └─────────────────────┘
-```
+Exemples de repos métiers :
 
-**Le Shell est verrouillé.** Il gère tout ce qui ne change pas : connexion utilisateur, paiement, création de jobs, polling, rendu des résultats.
+- repo Python d'analyse de CV
+- repo d'audit GitHub
+- repo d'analyse PDF
+- repo OCR facture
+- repo résumé vidéo
+- repo scoring SEO
+- repo data cleaning CSV
+- repo forecast / supply chain
 
-**Le moteur est variable.** C'est le repo Python qui contient la logique métier — CV scoring, résumé YouTube, OCR facture, analyse PDF, n'importe quoi.
+Le but est de **ne pas reconstruire à chaque fois** :
 
-Le contrat entre les deux est immuable et défini dans [`RUN_SCHEMA.md`](RUN_SCHEMA.md).
+| Brique fixe | Description |
+|---|---|
+| Auth | Authentification utilisateur |
+| Billing | Paiement + quotas |
+| Upload | Gestion fichiers |
+| Jobs | Queue asynchrone |
+| Worker | Exécution engine |
+| Dashboard | Interface résultats |
+| Logs | Monitoring |
+| Sécurité | Règles + scanners |
+| Déploiement | CI/CD standardisé |
 
----
-
-## 2. Architecture Shell / Engine
-
-### La structure du template v2
-
-```
-micro-saas-template-v2/
-├── config/
-│   ├── product.config.ts     ← branding, pricing, landing (tu modifies ça)
-│   └── run.schema.json       ← inputs du formulaire (tu modifies ça)
-│
-├── engine/
-│   ├── manifest.yaml         ← ressources, limites, env requis (tu modifies ça)
-│   ├── adapter.py            ← pont Shell ↔ repo métier (tu modifies ça)
-│   ├── run_engine.py         ← orchestrateur (rarement modifié)
-│   └── Dockerfile
-│
-├── app/                      ← verrouillé — ne pas toucher
-├── components/               ← verrouillé
-├── lib/                      ← verrouillé
-└── supabase/migrations/      ← verrouillé
-```
-
-### Les 5 niveaux de configuration
-
-| Niveau | Fichier | Vu par | Tu le modifies quand |
-|--------|---------|--------|----------------------|
-| 1 | `config/run.schema.json` | L'utilisateur (formulaire) | Tu changes les inputs du produit |
-| 2 | `config/product.config.ts` | L'utilisateur (landing, branding) | Tu changes le nom, prix, couleurs |
-| 3 | `engine/manifest.yaml` | Le runner | Tu changes les ressources ou secrets requis |
-| 4 | `.env.local` / Vercel | Le Shell Next.js | Au déploiement |
-| 5 | Docker runtime env | Le moteur Python | Au déploiement, déclaré dans manifest |
-
-### Le contrat input / output
-
-```json
-// Input (Shell → Engine)
-{
-  "user_id": "uuid",
-  "job_id": "uuid",
-  "product_id": "string",
-  "input": { ... selon run.schema.json ... }
-}
-
-// Output (Engine → Shell)
-{
-  "status": "success" | "error",
-  "blocks": [ ... ],
-  "error": "string optionnel",
-  "metadata": { "durationMs": 1234 }
-}
-```
-
-**9 types de blocks et pas un de plus** : `text`, `score`, `table`, `list`, `file`, `chart`, `json`, `warning`, `recommendation`. Si l'engine invente un type, le frontend ne sait pas le rendre. Utilise `json` pour de l'arbitraire.
+Ces éléments deviennent le **Shell fixe**.
+Le repo métier devient l'**Engine variable**.
 
 ---
 
-## 3. Créer un produit de A à Z
+## 2. Stratégie actuelle : template-first
 
-Exemple : transformer un repo Python de scoring de CV en SaaS.
+La priorité n'est pas encore d'automatiser toute la factory.
 
-### Étape 1 — Copier le template
+La priorité est de prouver une chaîne simple :
+
+```
+un repo existant
+  → branché au Shell
+  → input utilisateur
+  → job lancé
+  → engine exécuté
+  → résultat retourné
+  → résultat affiché
+  → démo déployable
+```
+
+**La méthode validée :**
+
+1. Créer les parties fixes du Shell
+2. Créer un template produit propre
+3. Prendre un premier repo pilote
+4. Le paramétrer pour le Shell
+5. Documenter ce qui a été modifié
+6. Répéter avec 2 ou 3 autres repos
+7. Automatiser seulement les étapes qui reviennent toujours
+
+Ce repo n'est donc **pas encore une factory magique**.
+
+C'est d'abord :
+- un template fiable
+- une méthode de portage
+- des règles strictes
+- une future factory automatisée
+
+---
+
+## 3. Architecture Shell / Engine
+
+Le système repose sur une **séparation stricte** :
+
+```
+┌─────────────────────────────────────┐      ┌────────────────────────────┐
+│ SHELL FIXE                          │      │ ENGINE VARIABLE             │
+│                                     │      │                            │
+│  Next.js / Supabase / Stripe        │      │  Repo métier Python         │
+│  Auth                               │      │  adapter.py                 │
+│  Billing                            │      │  run_engine.py              │
+│  Jobs                               │      │  manifest.yaml              │
+│  Upload                             │      │  requirements.txt           │
+│  Dashboard                          │      │  Dockerfile                 │
+│  AutoRunForm                        │      │                            │
+│  AutoResultRenderer                 │      │  Logique métier réelle      │
+│                                     │      │                            │
+│  Ne change presque jamais           │      │  Change à chaque produit    │
+└─────────────────────────────────────┘      └────────────────────────────┘
+```
+
+**Le Shell sait gérer :** utilisateur · paiement · quota · création de job · upload · polling · rendu des outputs · historique · logs · erreurs · sécurité
+
+**L'Engine sait faire :** traitement métier · analyse · calcul · scoring · génération · classification · extraction · recommandation
+
+---
+
+## 4. Ce qui est fixe vs ce qui change
+
+### Fichiers fixes
+
+Ces fichiers **ne doivent pas être modifiés** à chaque nouveau produit :
+
+```
+app/
+components/
+lib/
+middleware.ts
+supabase/migrations/
+config/result.schema.ts
+```
+
+### Fichiers modifiables par produit
+
+Pour créer un nouveau produit, on modifie principalement :
+
+```
+config/product.config.ts
+config/run.schema.json
+engine/manifest.yaml
+engine/adapter.py
+```
+
+| Fichier | Rôle |
+|---|---|
+| `product.config.ts` | Nom, branding, landing, pricing, modules activés |
+| `run.schema.json` | Inputs utilisateur, formulaire auto-généré |
+| `manifest.yaml` | Runtime, limites, ressources, secrets requis |
+| `adapter.py` | Pont entre le Shell et le repo métier |
+
+---
+
+## 5. Créer un produit à partir d'un repo
+
+Exemple : transformer un repo Python d'audit GitHub en SaaS.
+
+### Étape 1 — Choisir un repo pilote
+
+Le premier repo doit être simple. Critères :
+
+- entrée claire
+- sortie claire
+- commande exécutable
+- peu de dépendances
+- résultat affichable en blocks
+
+**Produit pilote recommandé : GitHub Repo Audit**
+
+Pourquoi :
+- cohérent avec la mission du repo
+- facile à comprendre
+- sortie facile à rendre : score, table, recommandations
+- bon exemple de produit B2B
+
+### Étape 2 — Copier le template
 
 ```bash
-cp -r micro-saas-template-v2 resumeforge
-cd resumeforge
+cp -r micro-saas-template-v2 github-audit-saas
+cd github-audit-saas
 pnpm install
 ```
 
-### Étape 2 — Configurer le produit (`config/product.config.ts`)
+### Étape 3 — Configurer le produit
 
-```typescript
+Modifier `config/product.config.ts` :
+
+```ts
 export const productConfig = {
-  id: "resumeforge",
-  name: "ResumeForge",
-  domain: "resumeforge.com",
-  theme: { primaryColor: "#6366f1" },
-  landing: {
-    heroTitle: "Score ton CV en 30 secondes",
-    heroSubtitle: "IA entraînée sur 10 000 CV acceptés",
+  id: "github-audit",
+  name: "GitHub Audit",
+  domain: "github-audit.com",
+
+  theme: {
+    primaryColor: "#111827"
   },
+
+  landing: {
+    heroTitle: "Audit a GitHub repo in minutes",
+    heroSubtitle: "Structure, documentation, security and execution readiness."
+  },
+
   pricing: {
-    freeRuns: 1,
-    plans: [{ id: "pro", stripePriceId: "price_xxx", runsPerMonth: 50 }]
+    freeRuns: 3,
+    plans: [
+      { id: "pro", name: "Pro", stripePriceId: "price_xxx", runsPerMonth: 100 }
+    ]
+  },
+
+  modules: {
+    upload: false,
+    dashboard: true,
+    billing: true,
+    exports: true
   }
 }
 ```
 
-### Étape 3 — Définir le formulaire (`config/run.schema.json`)
+### Étape 4 — Définir les inputs utilisateur
+
+Modifier `config/run.schema.json` :
 
 ```json
 {
-  "title": "Analyser mon CV",
-  "submitLabel": "Lancer l'analyse",
-  "estimatedRuntime": "30 secondes",
+  "title": "Audit GitHub repo",
+  "submitLabel": "Run audit",
+  "estimatedRuntime": "30-60 seconds",
   "inputs": [
     {
-      "key": "cv_url",
-      "type": "file",
-      "label": "Ton CV (PDF)",
+      "key": "repo_url",
+      "type": "text",
+      "label": "GitHub repository URL",
+      "placeholder": "https://github.com/user/repo",
       "required": true
     },
     {
-      "key": "target_job",
-      "type": "text",
-      "label": "Poste visé",
-      "required": true
+      "key": "audit_depth",
+      "type": "select",
+      "label": "Audit depth",
+      "required": true,
+      "options": [
+        { "label": "Quick", "value": "quick" },
+        { "label": "Standard", "value": "standard" },
+        { "label": "Deep", "value": "deep" }
+      ]
     }
   ]
 }
 ```
 
-Le formulaire `/run` est généré automatiquement à partir de ce fichier.
+Ce fichier génère automatiquement le formulaire `/run`.
 
-### Étape 4 — Écrire l'adapter (`engine/adapter.py`)
+### Étape 5 — Brancher le repo métier
+
+Modifier `engine/adapter.py` :
 
 ```python
-# C'est LE seul vrai code que tu écris
 import sys
 sys.path.insert(0, "/opt/engine/vendor")
-from resumeforge_core import score_cv   # ton repo métier
+
+from github_audit_core import audit_repo
 
 def run(payload: dict) -> dict:
     user_input = payload["input"]
-    result = score_cv(
-        cv_url=user_input["cv_url"],
-        job_title=user_input["target_job"]
+
+    result = audit_repo(
+        repo_url=user_input["repo_url"],
+        depth=user_input["audit_depth"]
     )
+
     return {
         "status": "success",
         "blocks": [
-            {"type": "score", "label": "Score global", "value": result.score},
-            {"type": "list",  "title": "Points forts", "items": result.strengths},
-            {"type": "list",  "title": "À améliorer",  "items": result.weaknesses},
-            {"type": "recommendation", "title": "Conseil principal", "body": result.tip}
-        ]
+            { "type": "score",  "label": "Global repo score", "value": result["score"] },
+            { "type": "table",  "title": "Audit summary", "columns": ["Area", "Status", "Comment"], "rows": result["summary_rows"] },
+            { "type": "list",   "title": "Priority fixes", "items": result["priority_fixes"] },
+            { "type": "recommendation", "title": "Next best action", "body": result["main_recommendation"] }
+        ],
+        "metadata": { "durationMs": result.get("duration_ms") }
     }
 ```
 
-### Étape 5 — Déclarer les ressources (`engine/manifest.yaml`)
+### Étape 6 — Déclarer le runtime
+
+Modifier `engine/manifest.yaml` :
 
 ```yaml
 mode: job
+
 runtime:
   type: docker
-  image: ghcr.io/insular2895/resumeforge-engine:latest
-  entrypoint: ['python', 'run_engine.py']
+  image: ghcr.io/insular2895/github-audit-engine:latest
+  entrypoint: ["python", "run_engine.py"]
+
 resources:
-  needs_llm: true
-  needs_storage: true
+  needs_llm: false
+  needs_storage: false
+
 limits:
   max_runtime_seconds: 60
-  max_input_mb: 5
+  max_input_mb: 1
+
 env:
-  required: [OPENAI_API_KEY]
+  required: []
 ```
 
-### Étape 6 — Tester en local
+### Étape 7 — Tester en mock
 
 ```bash
-# Mode mock (sans moteur)
-ENGINE_MODE=mock npm run dev
-
-# Mode docker (avec moteur réel)
-ENGINE_MODE=docker npm run dev
-python engine/run_engine.py --input engine/input.example.json --output /tmp/out.json
+ENGINE_MODE=mock pnpm dev
 ```
 
-Le produit est prêt à déployer.
+Objectif : formulaire visible · job créé · résultat exemple affiché · aucun engine réel appelé
+
+### Étape 8 — Tester l'Engine réel
+
+```bash
+python engine/run_engine.py \
+  --input engine/input.example.json \
+  --output /tmp/output.json
+```
+
+Vérifier : `status = success` · `blocks` = array · types autorisés · pas de secret dans les outputs
+
+### Étape 9 — Tester le Shell complet
+
+```bash
+pnpm lint && pnpm typecheck && pnpm build
+./tools/scanners/run-all.sh ./github-audit-saas
+```
 
 ---
 
-## 4. Le pipeline RUN en détail
+## 6. Contrat universel RUN
 
-Ce qui se passe exactement quand un utilisateur clique sur "Lancer" :
+Le contrat Shell → Engine est **fixe**.
 
-```
-┌──────┐         ┌──────────────────────────────┐         ┌──────────┐
-│ USER │         │        SHELL (Next.js)        │         │  ENGINE  │
-└──┬───┘         └──────────────────────────────┘         └────┬─────┘
-   │                                                            │
-   │  1. GET /run                                               │
-   │  ← formulaire généré depuis run.schema.json                │
-   │                                                            │
-   │  2. POST /api/jobs/create { input: {...} }                 │
-   │         │                                                  │
-   │         ├─ requireUser()      → vérif Supabase auth        │
-   │         ├─ checkQuota()       → quota mensuel plan Stripe  │
-   │         ├─ validate(Ajv)      → run.schema.json            │
-   │         ├─ INSERT jobs        → status='pending'           │
-   │         ├─ runEngine() async ─────────────────────────────►│
-   │  ← 202 { jobId }             │                             │
-   │                               │     validate (Pydantic)    │
-   │  3. GET /results/[jobId]      │     adapter.run(payload)   │
-   │         │                     │     → core logic           │
-   │  ← status: 'running'          │     → output.json          │
-   │                               │◄────────────────────────── │
-   │         updateJob(success, result)                         │
-   │                                                            │
-   │  4. GET /api/jobs/[jobId]                                  │
-   │  ← { status: 'success', result: { blocks: [...] } }        │
-   │                                                            │
-   │  5. AutoResultRenderer → rend les blocks                   │
-```
-
-### Les fichiers traversés par un paramètre
-
-Suivons `cv_url` du formulaire jusqu'à l'engine :
-
-```
-run.schema.json       → "key": "cv_url", "type": "file"
-AutoRunForm.tsx       → upload → signed URL Supabase Storage
-/api/jobs/create      → { input: { cv_url: "https://...signed..." } }
-jobs (Postgres)       → stocké en jsonb
-lib/runner.ts         → écrit input.json, docker run
-engine/run_engine.py  → json.load('/data/input.json')
-engine/adapter.py     → payload["input"]["cv_url"]     ← même clé
-resumeforge_core      → requests.get(cv_url)           ← arrivée finale
-```
-
-**Les fichiers ne voyagent jamais en JSON.** Ils sont uploadés via `POST /api/upload` vers Supabase Storage et transmis comme URLs signées.
-
-### Les modes du runner
-
-| Mode | Usage | Coût |
-|------|-------|------|
-| `mock` | Dev front sans moteur, démo waitlist | 0 |
-| `docker` | Dev local avec moteur réel | CPU local |
-| `http` | Engine déployé (Fly.io, Railway, Modal) | $/mois |
-
-### Validation double (defense-in-depth)
-
-```
-Shell côté → Ajv valide run.schema.json
-Engine côté → Pydantic valide le même payload
-```
-
-Si un champ manque ou est malformé, les deux couches le rejettent indépendamment.
-
-### Sécurité des erreurs
-
-```python
-# ❌ INTERDIT — peut leaker des secrets dans les logs
-return {"status": "error", "error": traceback.format_exc()}
-
-# ✅ CORRECT
-return {
-    "status": "error",
-    "error": f"adapter_{type(e).__name__}",
-    "blocks": [{"type": "warning", "title": "Erreur", "message": "Une erreur est survenue."}]
+**Input**
+```json
+{
+  "user_id": "uuid",
+  "job_id": "uuid",
+  "product_id": "string",
+  "input": {
+    "repo_url": "https://github.com/user/repo",
+    "audit_depth": "standard"
+  }
 }
 ```
 
-### Mode mock obligatoire
+**Output**
+```json
+{
+  "status": "success",
+  "blocks": [
+    { "type": "score", "label": "Global score", "value": 82 }
+  ],
+  "metadata": { "durationMs": 1234 }
+}
+```
 
-Tout template doit fonctionner en `ENGINE_MODE=mock`. Cela retourne `output.example.json` sans appeler le moteur — utile pour les demos, la waitlist, et les tests frontend.
+**Types de blocks autorisés**
+
+| Type | Usage |
+|---|---|
+| `text` | Texte libre |
+| `score` | Valeur numérique ou % |
+| `table` | Données tabulaires |
+| `list` | Liste d'items |
+| `file` | Fichier téléchargeable |
+| `chart` | Graphique |
+| `json` | Données brutes |
+| `warning` | Alerte |
+| `recommendation` | Action recommandée |
+
+> L'Engine ne doit pas inventer de nouveau type. Si un résultat ne rentre pas dans un type existant, utiliser `json` ou `file`.
 
 ---
 
-## 5. Déployer un produit
+## 7. Premier objectif concret
 
-### Niveau 0 — Démo (0€, 5 min)
+**Ce n'est pas :**
+- tout automatiser
+- générer une app complète depuis un screenshot
+- connecter 18 briques
+- faire un cockpit multi-sites complet
 
-```bash
-# 1. Supabase : créer un projet + exécuter les migrations
-supabase/migrations/0001_initial.sql
-supabase/migrations/0002_storage.sql
-supabase/migrations/0003_jobs_queue_and_stripe_v2.sql
+**C'est :**
 
-# 2. Vercel : ajouter les variables
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-vercel env add SUPABASE_SERVICE_ROLE_KEY
-vercel env add ENGINE_MODE          # "mock"
-vercel env add CRON_SECRET          # openssl rand -hex 32
-vercel env add WORKER_API_TOKEN     # openssl rand -hex 32
-
-vercel deploy --prod
+```
+1 repo réel  +  1 template propre  +  1 adapter
+→ 1 formulaire  →  1 job  →  1 output  →  1 rendu  →  1 README clair
 ```
 
-→ Site en ligne avec formulaire fonctionnel, résultats mockés, waitlist possible.
+**Définition du succès V1 :**
 
-### Niveau 1 — Live avec vrais utilisateurs (0–20€/mois)
+- [ ] Le template démarre en local
+- [ ] Le mode mock fonctionne
+- [ ] Le repo métier peut être appelé via `adapter.py`
+- [ ] Les résultats sont rendus avec `AutoResultRenderer`
+- [ ] Les checks de base passent
+- [ ] Le portage est documenté
 
-Ajouter à Niveau 0 :
-
-```bash
-# Stripe (billing réel)
-vercel env add STRIPE_SECRET_KEY
-vercel env add STRIPE_WEBHOOK_SECRET
-
-# Engine réel (Fly.io auto-stop)
-vercel env add ENGINE_MODE=http
-vercel env add ENGINE_URL=https://resumeforge-engine.fly.dev
-vercel env add ENGINE_TOKEN=...
-```
-
-```bash
-# Déployer le worker engine sur Fly
-fly launch --dockerfile engine/Dockerfile
-fly secrets set OPENAI_API_KEY=sk-...
-fly deploy
-```
-
-### Niveau 2 — Pro / B2B (4–20€/mois fixes)
-
-VPS Hetzner + Coolify + Postgres dédié + Redis. Déclenché uniquement si un client B2B exige des données on-premise ou si le volume le justifie. Voir `ops-packs/coolify/`.
+> Tant que cette chaîne n'est pas stable, il ne faut pas complexifier.
 
 ---
 
-## 6. Le pipeline screenshot → module
+## 8. Pipeline screenshot → module
 
-Quand tu t'inspires d'une app existante pour créer une feature :
-
-### Étape A — Inspiration
+Le screenshot-to-code sert **uniquement de brouillon d'analyse**, pas de code final.
 
 ```
-Sources autorisées :
-  screenshot d'un SaaS concurrent · template Webflow · maquette Figma
-  app open source · landing concurrente · dashboard existant
+screenshot / URL / template Webflow
+  → brouillon UI
+  → extraction des fonctions utiles
+  → abstraction cleanroom
+  → function book
+  → module registry
+  → intégration Shell
 ```
 
-La règle cleanroom (`legal/cleanroom-policy.md`) interdit : copier du code, des assets, du branding, des textes verbatim, du pixel-perfect. Elle impose de transformer l'inspiration en besoin métier abstrait avant toute implémentation.
+**Ce qu'on garde :** structure générale · besoin fonctionnel · états UI · interactions · patterns UX
 
-### Étape B — Brouillon
+**Ce qu'on ne garde pas :** code copié · branding · assets · textes exacts · classes générées sans contrôle
 
-```
-screenshot → abi/screenshot-to-code → React/Tailwind brut
-```
+### Exemple de Function Book
 
-Ce code **n'est pas mergé**. Il sert à extraire : sections, composants, états UI, formulaires, interactions, hiérarchie visuelle.
-
-### Étape C — Abstraction
-
-```
-Ce que le brouillon montre :          Ce que tu gardes :
-  Zone drag and drop                    Function: upload-drag-drop
-  Bouton "Upload file"                  Besoin : importer un fichier,
-  Animation de progression               voir la progression,
-                                         gérer les erreurs,
-                                         envoyer au moteur RUN.
-```
-
-### Étape D — Function Book
-
-```
-docs/function-book/upload-drag-drop.md
-```
+`docs/function-book/upload-drag-drop.md`
 
 ```markdown
 # upload-drag-drop
 
 ## Cas d'usage
-analyse PDF · CV parser · transcript · facture OCR · import CSV
+- analyse PDF, CV parser, OCR facture, import CSV, transcript analyzer
 
-## États UI obligatoires
+## États UI
 idle · dragging · uploading · processing · completed · failed · empty · degraded
 
 ## Sécurité
-taille max · extensions autorisées · URL signées · bucket privé · antivirus · suppression auto
+taille max · extensions autorisées · URL signées · bucket privé · suppression auto
 
 ## Activation
 modules.upload = true
 ```
 
-### Étape E — Module registry
+> Aujourd'hui, ce pipeline doit rester **manuel**. L'automatisation viendra après plusieurs modules validés.
+
+---
+
+## 9. Statut réel des briques
+
+| Brique | Rôle | Statut | Priorité |
+|---|---|---|---|
+| `micro-saas-template-v2` | Template produit Shell + Engine | MVP / à stabiliser | **Haute** |
+| `RUN_SCHEMA.md` | Contrat input/output | Défini | **Haute** |
+| `AGENT_RULES.md` | Règles globales agents | Défini | **Haute** |
+| `QUALITY_GATES.md` | Checks PR / sécurité | Défini / à rendre exécutable | **Haute** |
+| `tools/scanners` | Scans sécurité locaux | Partiel | **Haute** |
+| `legal/` | Cleanroom / data / licences | MVP | **Haute** |
+| `security-packs` | Configs sécurité | Scaffold | **Haute** |
+| `repo-factory-shell` | CLI audit/scaffold/connect | Skeleton | Moyenne |
+| `modules-registry` | Modules réutilisables | Skeleton | Moyenne |
+| `backend-packs` | Patterns backend validés | Scaffold | Moyenne |
+| `ai-privacy-gateway` | Redaction PII avant LLM | Scaffold | Moyenne |
+| `reference-site-analyzer` | URL/screenshot → spec cleanroom | Skeleton | Plus tard |
+| `feature-generation` | Génération blueprint feature | Skeleton | Plus tard |
+| `growth-data-layer` | Consentement / datasets | MVP doctrine + SQL | Plus tard |
+| `finance-ledger` | P&L par site | MVP doctrine + SQL | Plus tard |
+| `factory-control-center` | Cockpit multi-sites | Scaffold | Plus tard |
+| `ops-packs` | Monitoring / backups / infra | Scaffold | Plus tard |
+| `automation-packs` | Workflows n8n | Scaffold | Plus tard |
+
+---
+
+## 10. Règles agents et sécurité
+
+Tout agent IA qui modifie ce repo doit lire :
 
 ```
-modules-registry/upload/
-  module.yaml · spec/ · frontend/ · backend/ · workers/ · tests/
+AGENT_RULES.md
+QUALITY_GATES.md
+RUN_SCHEMA.md
+micro-saas-template-v2/CLAUDE.md
 ```
 
-### Étape F — Activation produit
+**Règles non négociables :**
 
-```typescript
-export const productConfig = {
-  modules: {
-    upload: true,
-    dashboard: true,
-    billing: true,
-  }
-}
-```
+1. Ne pas modifier le Shell fixe sans raison explicite
+2. Ne pas écrire de backend freestyle si un pack existe
+3. Ne pas copier du code ou du design depuis un concurrent
+4. Ne pas envoyer de PII dans un prompt LLM
+5. Ne pas mettre de traitement long dans une route HTTP
+6. Ne pas exporter de data sans consentement valide
+7. Ne pas bypasser les checks sécurité
+8. Ne pas push directement sur `main`
 
-### Étape G — Intégration Shell
-
-```
-Fichier uploadé
-  → POST /api/upload → URL signée Supabase Storage
-  → POST /api/jobs/create { input: { file_url: "..." } }
-  → validate (Ajv + Pydantic)
-  → INSERT job pending
-  → engine adapter.run()
-  → output blocks
-  → AutoResultRenderer
-```
-
-### Étape H — Quality check
-
-```
-design states ✓ · security rules ✓ · cleanroom check ✓ · tests ✓
-```
-
-### Version finale visée
+**Avant chaque commit :**
 
 ```bash
-factory feature:from-screenshot ./upload-screen.png
+pnpm lint
+pnpm typecheck
+# tests si disponibles
+pnpm build
+# scan secrets + dépendances + sécurité
+# vérification contrat output
 ```
-
-→ génère automatiquement : function-book, module-registry, specs, cleanroom report, design states, security rules, PR draft.
-
-Aujourd'hui ce pipeline est manuel (phases 2–3).
 
 ---
 
-## 7. Les 18 briques de la factory
+## 11. Roadmap de construction
 
-```
-Idée / URL / Screenshot
-        │
-        ▼
-[reference-site-analyzer]  → cleanroom : analyse sans copier
-        │
-        ▼
-[feature-generation]       → feature blueprint UI/API/worker/sécurité
-        │
-        ▼
-[modules-registry]         → composants réutilisables versionnés
-        │
-        ▼
-[backend-packs]            → patterns backend prévalidés
-        │
-        ▼
-App déployée
-        ├─ [ops-packs]               monitoring · backups · incidents
-        ├─ [ops-autopilot]           fallback · quotas · auto-degrade
-        ├─ [automation-packs]        workflows n8n versionnés
-        ├─ [factory-control-center]  cockpit multi-sites P&L
-        ├─ [finance-ledger]          revenus · coûts · P&L par site
-        ├─ [growth-data-layer]       collecte · consentement · datasets
-        ├─ [ai-privacy-gateway]      anonymisation avant LLM (Presidio)
-        └─ [security-packs]          scans à chaque PR
-```
+### Phase 0 — Nettoyage repo
 
-| Brique | Rôle | Statut |
-|--------|------|--------|
-| `micro-saas-template-v2` | Template Next.js / Supabase / Stripe — Shell + engine pattern | MVP complet |
-| `repo-factory-shell` | CLI : audit, normalize, connect, scaffold, scan | Skeleton phase 1 |
-| `reference-site-analyzer` | URL/screenshot → feature spec cleanroom | Skeleton phase 2 |
-| `feature-generation` | Idée → blueprint UI/API/worker/tests | Skeleton phase 2 |
-| `modules-registry` | Composants versionnés réutilisables (18 modules specs) | Skeleton phase 2 |
-| `backend-packs` | Patterns backend prévalidés (Supabase, Trigger.dev, BullMQ, FastAPI) | Scaffold |
-| `agent-quality-system` | Skills, router, approval-policy, hooks pour Claude/Codex | MVP complet |
-| `dev-orchestrator` | Tâches IA bornées async — détecteurs, classifieur, runners | Scaffold |
-| `context-engine` | Graphify : mémoire des décisions, évite le token-burn | Scaffold |
-| `security-packs` | Semgrep, Gitleaks, OSV, Trivy, CodeQL, ZAP — configs et scanners | Scaffold |
-| `ai-privacy-gateway` | Presidio FR : détection + redaction PII avant tout appel LLM | Scaffold phase 1 |
-| `growth-data-layer` | SQL : consent, identity resolution, lead scoring, datasets vendables | MVP complet |
-| `ops-packs` | Coolify, Uptime Kuma, Sentry, Renovate, Restic | Scaffold |
-| `ops-autopilot` | Fallback moteur, quotas, modes site, blocage exports | Scaffold phase 4 |
-| `automation-packs` | 9 workflows n8n + docker-compose | Scaffold |
-| `factory-control-center` | Cockpit Next.js multi-sites : P&L, incidents, sécurité | Scaffold phase 4 |
-| `finance-ledger` | Revenus, coûts, P&L par site_id | MVP complet |
-| `legal` | Cleanroom, data-selling, consent, attribution, licences | MVP complet |
+> Rendre le repo crédible à l'ouverture.
 
----
+- [ ] Supprimer les dossiers générés par erreur
+- [ ] Corriger les fichiers mal formatés
+- [ ] Vérifier les README par dossier
+- [ ] Ajouter `CURRENT_STATUS.md`
+- [ ] Ajouter `HAPPY_PATH.md`
 
-## 8. Les règles qui gouvernent tout
+### Phase 1 — Template produit stable
 
-### AGENT_RULES — 7 principes non négociables
+> Avoir un moule propre.
 
-Tout agent (Claude, Codex, dev-orchestrator) lit [`AGENT_RULES.md`](AGENT_RULES.md) en premier.
+- [ ] Stabiliser `micro-saas-template-v2`
+- [ ] Vérifier `pnpm install` · `lint` · `typecheck` · `build`
+- [ ] Vérifier `ENGINE_MODE=mock`
+- [ ] Vérifier `AutoRunForm` + `AutoResultRenderer`
 
-| Règle | Ce que ça interdit |
-|-------|-------------------|
-| Boîte fermée | Modifier hors des fichiers listés dans chaque template |
-| Pas d'improvisation backend | Écrire du backend custom — on choisit un pack dans `backend-packs/` |
-| Cleanroom | Copier du code, assets, textes, pixel-perfect d'un site externe |
-| Pas de PII en prompt | Envoyer des données utilisateur à un LLM sans passer par Presidio |
-| Pas de traitement long en HTTP | Toute tâche > 10s → job DB → queue → worker → retry → status |
-| Pas d'export sans gate | Exporter de la data si `sellable_status != eligible` |
-| Validation avant action risquée | Toute action sensible (prod, billing, DB) déclenche `ask_before` |
+### Phase 2 — Premier repo pilote
 
-### QUALITY_GATES — Checks bloquants par PR
+> Brancher un vrai repo métier.
 
-```
-Code          lint · typecheck · tests · build
-Sécurité      Gitleaks (secrets) · Semgrep (SAST) · OSV/Trivy (dépendances)
-Data          pas de PII dans fixtures · consent vérifié · sellable_status gate
-Modules       version bumped · module.yaml valide · CHANGELOG à jour
-Workflow      pas de push direct main · PR description non vide
-```
+- [ ] Choisir un repo simple
+- [ ] Définir `input.example.json` + `output.example.json`
+- [ ] Écrire `adapter.py` · `run.schema.json` · `manifest.yaml`
+- [ ] Documenter le portage
+
+**Produit pilote recommandé : GitHub Repo Audit SaaS**
+
+### Phase 3 — Deuxième et troisième repos
+
+> Détecter les répétitions.
+
+- [ ] Porter 2 autres repos (PDF analyzer · CSV cleaner · SEO audit)
+- [ ] Noter les étapes identiques et les points bloquants
+- [ ] Identifier les modules réutilisables
+
+### Phase 4 — Modules fixes
+
+> Créer les premiers modules vraiment réutilisables.
+
+Priorité : `upload-drag-drop` · `dashboard-kpi-cards` · `result-table-export` · `auth-wall` · `billing-paywall` · `job-history`
+
+Chaque module doit avoir : `README.md` · `module.yaml` · `frontend/` · `backend/` · `states.md` · `security.md` · `tests/`
+
+### Phase 5 — Automatisation légère
+
+> Automatiser ce qui est répétitif, pas ce qui est encore flou.
 
 ```bash
-# Tout en local avant push
-./tools/scanners/run-all.sh ./micro-saas-template-v2
-
-# Tests du template
-cd micro-saas-template-v2 && npm run ci
+factory scaffold my-product
+factory validate ./my-product
+factory scan ./my-product
+factory contract:validate ./engine/output.example.json
 ```
 
-### La chaîne data (règle absolue)
+> Ne pas commencer par là. Le CLI vient après le template et les premiers portages.
 
-```
-collecte
-  → consentement enregistré (consent_ledger — append-only)
-  → identification contact (identity-resolution)
-  → enrichissement contrôlé
-  → sellable_status calculé
+### Phase 6 — Factory avancée
 
-Aucune donnée ne sort si :
-  opt_out = true · consent_partners = false
-  sellable_status != eligible · retention_expires_at dépassé
-```
+> Aller vers la factory complète.
 
-Défini dans `growth-data-layer/exports/export-policy.md` et `legal/data-selling-policy.md`.
-
-### Hiérarchie des règles
-
-```
-/AGENT_RULES.md                              (doctrine root — tous les agents)
-        ↓ étend
-/agent-quality-system/AGENT_RULES.md         (skills, policies, hooks)
-        ↓ spécialise
-/micro-saas-template-v2/CLAUDE.md            (règles strictes de portage v2)
-```
-
-En cas de conflit : `CLAUDE.md` prime dans son dossier, mais ne peut pas contredire les 7 principes root.
+`reference-site-analyzer` · `feature-generation` · `modules-registry complet` · `factory-control-center` · `ops-autopilot` · `automation-packs` · `growth-data-layer complet`
 
 ---
 
-## 9. Ce que les agents peuvent faire
-
-Défini dans [`agent-quality-system/policies/approval-policy.yml`](agent-quality-system/policies/approval-policy.yml).
-
-### Auto-autorisé (sans demander)
+## 12. Fichiers à lire en premier
 
 ```
-lire des fichiers · chercher dans le repo · lancer les tests · lancer lint
-créer une feature spec · générer des docs · corriger une erreur TypeScript
-créer une branche locale · ouvrir une PR draft
-bloquer un export data invalide · créer un ticket
-```
-
-### Review après (fait, puis review humaine)
-
-```
-modifier un composant · modifier une API route · créer un contrat backend
-générer un draft de migration SQL (ne l'applique pas) · bumper une version mineure
-```
-
-### Demander avant (confirmation explicite requise)
-
-```
-changer la logique auth · changer la logique billing · modifier le schema DB
-appliquer une migration en prod · déployer en production
-changer des secrets · toucher lib/ ou middleware.ts d'un template
-exporter un dataset vendable · signer un contrat buyer
-```
-
-### Impossible sans action humaine
-
-```
-supprimer des données client · exposer des secrets · désactiver les scans sécurité
-désactiver le consent gate · pusher directement sur main · merger avec des checks en échec
-vendre de la data sans consentement valide · bypasser la cleanroom policy
-modifier les rows consent_ledger (append-only au niveau DB)
-```
-
-### Pipeline obligatoire avant commit
-
-```
-1. Lire AGENT_RULES.md + les skills nécessaires
-2. Vérifier modules-registry / backend-packs : la tâche est peut-être déjà résolue
-3. Lire uniquement les fichiers concernés (anti-token-burn)
-4. Plan : feature blueprint si feature, sinon liste fichiers + tests
-5. Exécuter
-6. Tests locaux (lint, typecheck, tests)
-7. tools/scanners/run-all.sh sur la zone modifiée
-8. Si données utilisateur → vérifier ai-privacy-gateway
-9. Si export → vérifier sellable_status gate
-10. Commit + PR draft
+1.  README.md                              ← vous êtes ici
+2.  CURRENT_STATUS.md
+3.  HAPPY_PATH.md
+4.  RUN_SCHEMA.md
+5.  AGENT_RULES.md
+6.  QUALITY_GATES.md
+7.  README_FACTORY.md
+8.  micro-saas-template-v2/README.md
+9.  micro-saas-template-v2/RUN_FLOW.md
+10. micro-saas-template-v2/PORTING_CHECKLIST.md
+11. legal/cleanroom-policy.md
 ```
 
 ---
 
-## 10. Phases de finalisation
-
-| Phase | Briques | Statut |
-|-------|---------|--------|
-| **1 — Foundation** | CLI factory complet · Presidio recognizers FR · scanners aggregate | 🔧 En cours |
-| **2 — App generation** | reference-site-analyzer · feature-generation · modules-registry · design system | 📋 Spécifié |
-| **3 — Agents / contexte** | context-engine wiring · dev-orchestrator runtime · approval-policy CI | 📋 Spécifié |
-| **4 — Ops multi-sites** | factory-control-center · ops-autopilot detectors · cockpit UI complet | 📋 Spécifié |
-| **5 — Automation** | n8n workflows JSON complets · automation-packs delivery | 📋 Spécifié |
-| **6 — Data & monétisation** | growth-data-layer pipeline · Splink · dbt · delivery log complet | 📋 Spécifié |
-| **7 — Gouvernance** | ADRs systématiques · module versioning · AI output scorecard | 📋 Spécifié |
-
-Les contrats, schémas et policies de toutes les phases sont en place. Le code d'exécution suit ces contrats phase par phase.
-
----
-
-## Fichiers à lire en premier
+## Mantra
 
 ```
-README.md                                          (ce fichier)
-README_FACTORY.md                                  plan détaillé des 7 phases
-AGENT_RULES.md                                     doctrine agents (Claude/Codex)
-QUALITY_GATES.md                                   checks PR obligatoires
-RUN_SCHEMA.md                                      contrat universel input/output
-legal/data-selling-policy.md                       règle data vendable
-legal/cleanroom-policy.md                          règle anti-copie
-agent-quality-system/policies/approval-policy.yml  auto vs ask_before vs bloqué
-micro-saas-template-v2/RUN_FLOW.md                 pipeline RUN paramètre par paramètre
-micro-saas-template-v2/DEPLOYMENT.md               déploiement niveau 0/1/2
+Le Shell ne change presque jamais.
+Le produit change par configuration.
+L'Engine porte la vraie valeur métier.
+Le premier repo pilote valide la méthode.
+L'automatisation arrive seulement après répétition.
 ```
