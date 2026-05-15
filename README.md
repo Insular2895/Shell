@@ -21,6 +21,9 @@ Template-first, automation later.
 > On construit d'abord un moule propre, on le teste sur un vrai repo,
 > puis on améliore ce moule produit après produit.
 
+> **Nouveau ici ?** Lis [`CURRENT_STATUS.md`](CURRENT_STATUS.md) (ce qui marche aujourd'hui)
+> puis [`HAPPY_PATH.md`](HAPPY_PATH.md) (du clone au résultat en 6 étapes).
+
 ---
 
 ## Table des matières
@@ -471,6 +474,8 @@ modules.upload = true
 
 ## 9. Statut réel des briques
 
+> Tableau résumé ci-dessous. Pour le détail complet (ce qui est mock, scaffold, et la prochaine action exacte) → [`CURRENT_STATUS.md`](CURRENT_STATUS.md).
+
 | Brique | Rôle | Statut | Priorité |
 |---|---|---|---|
 | `micro-saas-template-v2` | Template produit Shell + Engine | MVP / à stabiliser | **Haute** |
@@ -535,11 +540,11 @@ pnpm build
 
 > Rendre le repo crédible à l'ouverture.
 
-- [ ] Supprimer les dossiers générés par erreur
-- [ ] Corriger les fichiers mal formatés
-- [ ] Vérifier les README par dossier
-- [ ] Ajouter `CURRENT_STATUS.md`
-- [ ] Ajouter `HAPPY_PATH.md`
+- [x] Supprimer les dossiers générés par erreur
+- [x] Corriger les fichiers mal formatés
+- [x] Vérifier les README par dossier
+- [x] Ajouter `CURRENT_STATUS.md`
+- [x] Ajouter `HAPPY_PATH.md`
 
 ### Phase 1 — Template produit stable
 

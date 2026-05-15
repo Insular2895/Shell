@@ -1,9 +1,14 @@
 # README_FACTORY.md — App / SaaS Factory
 
-> Cette factory transforme **une idée, une URL, ou un repo Python métier**
+> **Objectif à terme :** transformer une idée, une URL, ou un repo Python métier
 > en SaaS déployable, sécurisé, mesurable et opérationnellement piloté.
+>
+> **État aujourd'hui :** le template SaaS (`micro-saas-template-v2/`) est opérationnel.
+> Les briques factory sont majoritairement en scaffold — architecture définie,
+> code non encore écrit. Voir [`CURRENT_STATUS.md`](CURRENT_STATUS.md) pour
+> l'état exact de chaque brique.
 
-## Ce que la factory fait
+## Ce que la factory fera (pipeline cible)
 
 ```
 Idée / URL / Screenshot
@@ -98,10 +103,12 @@ Voir `docs/factory/00-overview.md` pour le détail. En résumé :
 
 ## Lis ces fichiers en premier
 
-1. `README_FACTORY.md` (tu y es)
-2. `AGENT_RULES.md` — doctrine globale agents (Claude/Codex)
-3. `QUALITY_GATES.md` — checks PR obligatoires
-4. `RUN_SCHEMA.md` — contrat universel input/output engine
-5. `legal/data-selling-policy.md` — règle data vendable
-6. `legal/cleanroom-policy.md` — règle anti-copie
-7. `agent-quality-system/policies/approval-policy.yml` — ce qui est auto vs ce qui demande validation
+1. [`CURRENT_STATUS.md`](CURRENT_STATUS.md) — état réel aujourd'hui (mock, scaffold, opérationnel)
+2. [`HAPPY_PATH.md`](HAPPY_PATH.md) — du clone au résultat en 6 étapes
+3. `README_FACTORY.md` (tu y es) — vision factory complète
+4. `AGENT_RULES.md` — doctrine globale agents (Claude/Codex)
+5. `QUALITY_GATES.md` — checks PR obligatoires
+6. `RUN_SCHEMA.md` — contrat universel input/output engine
+7. `legal/data-selling-policy.md` — règle data vendable
+8. `legal/cleanroom-policy.md` — règle anti-copie
+9. `agent-quality-system/policies/approval-policy.yml` — ce qui est auto vs ce qui demande validation
