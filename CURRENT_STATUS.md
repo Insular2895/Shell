@@ -10,7 +10,9 @@
 | Brique | Ce que tu peux faire concrètement |
 |--------|----------------------------------|
 | `micro-saas-template-v2/` | Cloner, installer, lancer en mode mock en 5 min. Le build, le typecheck et les tests passent. |
-| `AGENT_RULES.md` | Doctrine agents IA opérationnelle — Claude la respecte à chaque session. |
+| `AGENTS.md` | Règles opérationnelles courtes (20 lignes) — point d'entrée pour tout agent IA. |
+| `ARCHITECTURE.md` | Flux techniques synthétiques — Shell/Engine, pipeline RUN, cache, déploiement. |
+| `AGENT_RULES.md` | Doctrine agents IA complète — à lire pour comprendre le pourquoi des règles. |
 | `QUALITY_GATES.md` | Checks PR bloquants définis et lisibles. |
 | `RUN_SCHEMA.md` | Contrat input/output engine universel — utilisé par le template. |
 | `growth-data-layer/` | Schémas SQL + politiques de consentement + sellable_status prêts à migrer dans Supabase. |
@@ -52,6 +54,7 @@ mais le code exécutable n'est pas encore écrit.
 | `factory-control-center/` | Schéma DB | Next.js cockpit multi-sites |
 | `context-engine/` | README | Graphify anti-token-burn |
 | `dev-orchestrator/` | README | Tâches IA bornées async |
+| Cache Redis / Upstash | Doc complète `docs/architecture/cache-layer.md` + `.env.example` | Code d'intégration (ioredis / Upstash client dans `lib/`) |
 
 ---
 

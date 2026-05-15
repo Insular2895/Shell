@@ -605,18 +605,29 @@ factory contract:validate ./engine/output.example.json
 
 ## 12. Fichiers à lire en premier
 
+**Pour un humain qui découvre le projet :**
 ```
-1.  README.md                              ← vous êtes ici
-2.  CURRENT_STATUS.md
-3.  HAPPY_PATH.md
-4.  RUN_SCHEMA.md
-5.  AGENT_RULES.md
+1.  README.md              ← vous êtes ici
+2.  CURRENT_STATUS.md      ← état réel aujourd'hui
+3.  HAPPY_PATH.md          ← du clone au résultat en 6 étapes
+4.  ARCHITECTURE.md        ← flux techniques (Shell/Engine, run pipeline, cache)
+```
+
+**Pour un agent IA qui va modifier du code :**
+```
+1.  AGENTS.md              ← règles opérationnelles (20 lignes, lire en entier)
+2.  RUN_SCHEMA.md          ← contrat input/output engine
+3.  micro-saas-template-v2/CLAUDE.md  ← si portage d'un repo Python
+4.  AGENT_RULES.md         ← doctrine complète (si besoin de comprendre un principe)
+```
+
+**Pour comprendre la factory dans sa globalité :**
+```
+5.  README_FACTORY.md
 6.  QUALITY_GATES.md
-7.  README_FACTORY.md
-8.  micro-saas-template-v2/README.md
-9.  micro-saas-template-v2/RUN_FLOW.md
-10. micro-saas-template-v2/PORTING_CHECKLIST.md
-11. legal/cleanroom-policy.md
+7.  micro-saas-template-v2/RUN_FLOW.md
+8.  micro-saas-template-v2/PORTING_CHECKLIST.md
+9.  legal/cleanroom-policy.md
 ```
 
 ---

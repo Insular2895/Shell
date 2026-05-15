@@ -1,6 +1,9 @@
-# AGENT_RULES.md — Règles globales pour Claude / Codex / agents IA
+# AGENT_RULES.md — Doctrine complète agents IA
 
-> **Doctrine root.** Tous les agents qui touchent ce repo lisent ce fichier en premier.
+> **Pour démarrer rapidement → lis `AGENTS.md` (20 lignes).**
+> Ce fichier est la doctrine complète : pourquoi chaque règle existe.
+> Lis-le quand tu as besoin de comprendre un principe, pas à chaque session.
+>
 > Les fichiers `CLAUDE.md` à l'intérieur de chaque template (ex: `micro-saas-template-v2/CLAUDE.md`)
 > sont des **spécialisations** de cette doctrine pour un contexte précis.
 
