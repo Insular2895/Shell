@@ -1,5 +1,8 @@
 # Database scaling
 
+> Voir aussi : [cache-layer.md](cache-layer.md) — Redis / Upstash comme accélérateur
+> (rate limit, quotas, résultats engine, job status). Supabase reste la source de vérité.
+
 ## Postgres (Supabase)
 
 - Free tier : 500MB
