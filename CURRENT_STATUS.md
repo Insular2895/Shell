@@ -52,7 +52,7 @@ mais le code exécutable n'est pas encore écrit.
 | `ops-autopilot/` | Schéma status + action policy | Service de détection d'incidents + blocage exports |
 | `automation-packs/` | Policy + template-bank README | Workflows n8n versionnés |
 | `factory-control-center/` | Schéma DB | Next.js cockpit multi-sites |
-| `context-engine/` | README | Graphify anti-token-burn |
+| `context-engine/` | GRAPHIFY_SPEC.md + graphify-config.yml + policies | `graphify .` non encore lancé — `graphify-out/` absent |
 | `dev-orchestrator/` | README | Tâches IA bornées async |
 | Cache Redis / Upstash | Doc complète `docs/architecture/cache-layer.md` + `.env.example` | Code d'intégration (ioredis / Upstash client dans `lib/`) |
 
@@ -66,6 +66,7 @@ mais le code exécutable n'est pas encore écrit.
 - Génération automatique de feature blueprints (`feature-generation/`)
 - Modules versionnés réutilisables (`modules-registry/`)
 - Intégration Presidio anonymisation PII avant LLM (`ai-privacy-gateway/`)
+- Génération du graph Graphify (`graphify .` → `graphify-out/`) — spec prête dans `context-engine/GRAPHIFY_SPEC.md`
 
 ---
 

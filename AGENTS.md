@@ -27,7 +27,16 @@ npm run typecheck && npm run test && npm run build
 - Jamais de secret en dur dans le code
 - Avant toute modification majeure : exposer le plan, attendre validation
 
+## Carte du repo (anti-token-burn)
+<!-- À ACTIVER une fois `graphify .` lancé (voir context-engine/GRAPHIFY_SPEC.md) -->
+<!-- Décommenter ce bloc quand graphify-out/GRAPH_REPORT.md existe :          -->
+<!--                                                                           -->
+<!-- Avant d'explorer des fichiers, lis `graphify-out/GRAPH_REPORT.md`.       -->
+<!-- ~1-2k tokens. Remplace toute exploration manuelle de la structure.        -->
+<!-- Si le fichier n'existe pas : régénère avec `graphify .` depuis la racine. -->
+
 ## Pour aller plus loin
 - Doctrine complète → `AGENT_RULES.md`
 - Flux technique → `ARCHITECTURE.md`
+- Spec Graphify → `context-engine/GRAPHIFY_SPEC.md`
 - Portage repo Python → `micro-saas-template-v2/CLAUDE.md`

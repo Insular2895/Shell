@@ -85,12 +85,38 @@ Voir `docs/architecture/cache-layer.md` pour les clés, TTL et fournisseurs (Ups
 
 ---
 
-## 6. Fichiers de référence
+## 6. Flux agent (anti-token-burn)
+
+Un agent qui démarre une session suit ce chemin, dans l'ordre :
+
+```
+1. AGENTS.md                          (~500 tokens, règles opérationnelles)
+     │
+     ▼
+2. graphify-out/GRAPH_REPORT.md       (~1-2k tokens, carte du code)  ← À ACTIVER
+     │  (si absent : explorera les fichiers à la main, coûteux)
+     ▼
+3. Fichier(s) concernés par la tâche  (périmètre minimal)
+     │
+     ▼
+4. Exécution → commit
+```
+
+Sans l'étape 2, l'agent ouvre 10-20 fichiers pour comprendre la structure avant de commencer.
+Avec `graphify-out/GRAPH_REPORT.md` pré-généré, cette exploration coûte 0 token.
+
+Spec d'implémentation complète → `context-engine/GRAPHIFY_SPEC.md`
+
+---
+
+## 7. Fichiers de référence
 
 | Question | Fichier |
 |----------|---------|
 | Règles agents (opérationnel) | `AGENTS.md` |
+| Carte du repo (quand générée) | `graphify-out/GRAPH_REPORT.md` |
 | Doctrine agents (complète) | `AGENT_RULES.md` |
+| Spec intégration Graphify | `context-engine/GRAPHIFY_SPEC.md` |
 | Contrat input/output engine | `RUN_SCHEMA.md` |
 | Pipeline RUN détaillé | `micro-saas-template-v2/RUN_FLOW.md` |
 | Déploiement pas à pas | `micro-saas-template-v2/DEPLOYMENT.md` |
