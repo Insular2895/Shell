@@ -111,7 +111,7 @@ def run(payload: dict) -> dict:
         "status": "success",
         "blocks": [
             {"type": "text", "content": result["summary"]},
-            {"type": "metric", "label": "Score", "value": result["score"]}
+            {"type": "score", "title": "Score", "value": result["score"], "label": "Analyse"}
         ]
     }
 ```
@@ -137,10 +137,16 @@ L'`AutoResultRenderer` lit les `blocks` retournés par l'adapter et les rend aut
 | Type de block | Rendu |
 |--------------|-------|
 | `text` | Paragraphe |
-| `metric` | Carte avec label + valeur |
+| `score` | Valeur numérique ou % avec label |
+| `table` | Données tabulaires |
 | `list` | Liste à puces |
 | `file` | Lien de téléchargement |
-| `image` | Image avec caption |
+| `chart` | Graphique |
+| `json` | Données brutes |
+| `warning` | Alerte |
+| `recommendation` | Action recommandée |
+
+> Ces types sont les seuls valides — définis dans `RUN_SCHEMA.md`. Ne pas inventer de nouveaux types.
 
 **Vérification :** Le résultat s'affiche dans `/results/[jobId]` sans aucun code UI à écrire.
 
