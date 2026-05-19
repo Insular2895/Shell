@@ -3,7 +3,6 @@
 recursive = true
 
 [[ignored-vulns]]
-# Add CVE ids here with justification + sunset date
-# id = "CVE-2024-XXXXX"
-# reason = "Not exploitable in our usage — sunset 2026-12"
-# ignore-until = "2026-12-31"
+id = "GHSA-qx2v-qp2m-jg93"
+reason = "PostCSS is bundled transitively inside next@16.2.6. Root postcss is overridden to >=8.5.10; remove this once Next ships a patched nested dependency."
+ignore-until = "2026-08-31"
