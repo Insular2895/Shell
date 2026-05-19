@@ -3,6 +3,7 @@
 # - pydantic : validation stricte des inputs côté engine (defense-in-depth)
 
 requests>=2.31.0,<3.0
+idna>=3.15,<4.0
 pydantic>=2.5,<3.0
 
 # === Deps spécifiques au produit ===
