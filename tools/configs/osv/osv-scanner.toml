@@ -1,8 +1,4 @@
-# OSV-Scanner config
-[scan]
-recursive = true
-
-[[ignored-vulns]]
+[[IgnoredVulns]]
 id = "GHSA-qx2v-qp2m-jg93"
 reason = "PostCSS is bundled transitively inside next@16.2.6. Root postcss is overridden to >=8.5.10; remove this once Next ships a patched nested dependency."
-ignore-until = "2026-08-31"
+ignoreUntil = 2026-08-31

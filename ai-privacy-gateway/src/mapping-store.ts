@@ -104,8 +104,11 @@ function decrypt(payload: string) {
     'aes-256-gcm',
     encryptionKey(),
     Buffer.from(parsed.iv, 'base64'),
+    { authTagLength: 16 },
   );
-  decipher.setAuthTag(Buffer.from(parsed.tag, 'base64'));
+  const tag = Buffer.from(parsed.tag, 'base64');
+  if (tag.length !== 16) throw new Error('invalid_auth_tag_length');
+  decipher.setAuthTag(tag);
   return Buffer.concat([
     decipher.update(Buffer.from(parsed.data, 'base64')),
     decipher.final(),

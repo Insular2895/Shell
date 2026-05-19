@@ -28,6 +28,7 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from typing import Any, Optional
@@ -46,7 +47,7 @@ WORKER_ID = os.environ.get("WORKER_ID", f"{socket.gethostname()}-{uuid.uuid4().h
 PRODUCT_ID = os.environ.get("PRODUCT_ID")  # None = tous les produits
 LEASE_SECONDS = int(os.environ.get("LEASE_SECONDS", "900"))
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL_SECONDS", "5"))
-ENGINE_PATH = os.environ.get("ENGINE_PATH", "/app/engine/run_engine.py")
+ENGINE_PATH = "/app/engine/run_engine.py"
 
 
 def claim_job() -> Optional[dict[str, Any]]:
@@ -109,7 +110,7 @@ def complete_job(
 
 def run_engine(job: dict[str, Any]) -> tuple[str, Optional[dict], Optional[str], int]:
     """Exécute engine/run_engine.py avec le payload. Returns (status, result, error, duration_ms)."""
-    job_id = job["id"]
+    job_id = str(uuid.UUID(str(job["id"])))
     payload = {
         "user_id": job["user_id"],
         "job_id": job_id,
@@ -117,9 +118,9 @@ def run_engine(job: dict[str, Any]) -> tuple[str, Optional[dict], Optional[str],
         "input": job["input"],
     }
 
-    # On écrit dans /tmp pour rester compatible read-only Docker
-    work_dir = f"/tmp/job-{job_id}"
-    os.makedirs(work_dir, exist_ok=True)
+    # On écrit dans /tmp pour rester compatible read-only Docker.
+    # Le nom du dossier est généré localement, pas dérivé du job reçu.
+    work_dir = tempfile.mkdtemp(prefix="job-")
     input_path = f"{work_dir}/input.json"
     output_path = f"{work_dir}/output.json"
 
