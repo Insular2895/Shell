@@ -8,7 +8,7 @@
 #           worker:local
 #
 # Le worker contient le module engine/ ET la logique de poll. C'est ce qui
-# tourne sur Fly Machines / Railway / Modal pour les jobs longs.
+# tourne sur Fly Machines pour les jobs longs.
 # =============================================================================
 
 # ---------- Stage 1 : builder ----------

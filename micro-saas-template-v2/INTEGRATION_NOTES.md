@@ -28,8 +28,8 @@ ne peut pas contredire les principes 1-7 de root AGENT_RULES.
 | `config/run.schema.json` | Instance du contrat décrit dans `/RUN_SCHEMA.md` | OK |
 | `supabase/migrations/0001-0003.sql` | Implémentation référence du pack `/backend-packs/supabase-trigger/` | OK |
 | `worker/run_worker.py` | Implémentation référence du worker pattern | OK |
-| `lib/runner.ts` (auto-degrade) | Implémentation du `engine_mode` doctrine `/ops-autopilot/status-service/` | OK |
-| `app/api/cron/auto-degrade` | Implémentation factory `auto-degrade quand pas d'utilisateurs` | OK |
+| `lib/runner.ts` + `lib/workerLifecycle.ts` | Implémentation du `engine_mode` doctrine `/ops-autopilot/status-service/` | OK |
+| `app/api/cron/auto-degrade` | Filet de sécurité billing gate quand aucun client payant actif | OK |
 | `app/api/stripe/webhook` (idempotency) | Pattern `verify→enqueue→ACK` doctrine `/security-packs/policies/` | OK |
 
 ## Ce que v2 N'a PAS et qui doit être ajouté pour respecter la factory complète
@@ -68,7 +68,7 @@ Si tu pars de v2 pour un nouveau produit aujourd'hui :
 4. **Setup Growth Data Layer** uniquement si lead-capture / vente data
 5. **Cockpit visible** uniquement si > 1 site
 
-Tu peux opérer plusieurs mois en niveau 1 (v2 + auto-degrade) avant d'avoir
+Tu peux opérer plusieurs mois en niveau 1 (v2 + billing gate) avant d'avoir
 besoin du cockpit complet. La factory n'est pas une obligation immédiate,
 c'est un plan d'extension.
 
@@ -79,7 +79,7 @@ c'est un plan d'extension.
 - ✅ Worker externe + lease + retry + timeout
 - ✅ Rate limit serveur (10/min/user)
 - ✅ Validation defense-in-depth (Ajv côté Shell + Pydantic côté engine)
-- ✅ Auto-degrade pour économiser quand pas d'utilisateurs
+- ✅ Billing gate pour économiser quand aucun abonnement payant actif
 - ✅ Hooks Claude Code (block-destructive, scan-secrets)
 - ✅ Slash commands `/security-review` `/cso` `/review` `/ship` `/qa`
 - ✅ Tests unitaires des composants critiques (validator, circuit breaker, rate limit)

@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { stripe } from '@/lib/billing';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { syncEngineModeFromBilling } from '@/lib/workerLifecycle';
 import productConfig from '@/config/product.config';
 
 export const dynamic = 'force-dynamic';
@@ -71,6 +72,8 @@ export async function POST(req: Request) {
 
   // ----- HANDLERS -----
   try {
+    let billingChanged = false;
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -84,6 +87,7 @@ export async function POST(req: Request) {
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
           await upsertSubscription(supabase, userId, sub);
+          billingChanged = true;
         }
         break;
       }
@@ -94,6 +98,7 @@ export async function POST(req: Request) {
         const userId = (sub.metadata?.user_id as string | undefined) ?? null;
         if (!userId) break;
         await upsertSubscription(supabase, userId, sub);
+        billingChanged = true;
         break;
       }
 
@@ -107,6 +112,7 @@ export async function POST(req: Request) {
             stripe_price_id: null,
           })
           .eq('stripe_subscription_id', sub.id);
+        billingChanged = true;
         break;
       }
 
@@ -124,12 +130,20 @@ export async function POST(req: Request) {
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_subscription_id', subId);
+          billingChanged = true;
         }
         break;
       }
 
       default:
         break;
+    }
+
+    if (billingChanged) {
+      const synced = await syncEngineModeFromBilling(supabase, `stripe:${event.type}`);
+      if (synced.runtime.action === 'error') {
+        console.warn(`[stripe-webhook] worker lifecycle sync failed event=${event.id}`);
+      }
     }
 
     // Marquer processed

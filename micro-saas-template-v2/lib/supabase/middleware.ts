@@ -1,7 +1,7 @@
 /**
  * lib/supabase/middleware.ts
  *
- * Pattern OFFICIEL Supabase pour Next.js 15 (App Router).
+ * Pattern OFFICIEL Supabase pour Next.js 15+ (App Router).
  * Réf : https://supabase.com/docs/guides/auth/server-side/nextjs
  *
  * Rôle : refresh le token d'auth à chaque requête (les Server Components

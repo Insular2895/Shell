@@ -3,16 +3,32 @@
 Ce document explique comment passer du repo au site en ligne avec billing et
 moteur fonctionnels. Trois niveaux de déploiement selon ton stade.
 
+## Doctrine coûts
+
+La règle Shell est simple :
+
+- **Aucun client payant actif** → `site_config.engine_mode='mock'`, pas de
+  worker requis, résultat de démo via `engine/output.example.json`.
+- **Au moins un abonnement Stripe `active` ou `trialing` non-free** →
+  `site_config.engine_mode='live'`, les jobs partent en queue et le worker Fly
+  est démarré si `WORKER_PROVIDER=fly`.
+- **Client annulé, impayé, past_due, unpaid ou paused** → retour en `mock` au
+  prochain webhook Stripe, puis filet de sécurité via cron horaire.
+
+Le billing est donc la source de vérité du runtime. L'activité gratuite ne
+réveille jamais le moteur réel.
+
 ## TL;DR — Les 3 niveaux
 
 | Niveau | Quoi | Coût/mois | Quand |
 |--------|------|-----------|-------|
-| **0 — Démo** | Vercel + Supabase free, `engine_mode=mock` | ~0€ (domaine seul) | Tester un produit, faire une waitlist |
-| **1 — Live** | Niveau 0 + worker Fly auto-stop + Stripe live | 0-5€/mois inactif, ~5-20€ avec usage | Premier client payant |
+| **0 — Démo / no-client** | Vercel + Supabase free, `engine_mode=mock`, `WORKER_PROVIDER=none` | ~0€ (domaine seul) | Tester, waitlist, produit sans revenu |
+| **1 — Live paid** | Niveau 0 + Stripe live + Fly Machines démarrées à la demande | ~0€ hors job, quelques € selon usage | Premier client payant |
 | **2 — Pro/B2B** | VPS Hetzner + Coolify + Postgres dédié + Redis | 4-20€/mois fixes | Clients exigeants, données sensibles |
 
-Tu commences au **niveau 0**, tu passes au **niveau 1** quand tu as un client
-qui paye, tu passes au **niveau 2** uniquement si un client B2B le demande.
+Tu commences au **niveau 0**. Tu passes au **niveau 1** quand Stripe a un
+abonnement réel. Tu passes au **niveau 2** uniquement si un client B2B demande
+isolation, conformité ou infra dédiée.
 
 ---
 
@@ -66,9 +82,10 @@ Events: `checkout.session.completed`, `customer.subscription.*`,
 
 ---
 
-## Niveau 1 — Live avec worker Fly (15 min)
+## Niveau 1 — Live avec worker Fly à la demande (20 min)
 
-À faire quand tu as un client payant ou que tu veux le moteur réel actif.
+À faire quand tu as ton premier client payant ou que tu veux tester un paiement
+end-to-end en Stripe live.
 
 ### 1. Build et push l'image engine
 
@@ -89,11 +106,11 @@ docker push ghcr.io/<user>/<product>-engine:latest
 # Setup Fly CLI : https://fly.io/docs/hands-on/install-flyctl/
 fly auth login
 
-# Copie le template fly.toml
-cp worker/fly.toml.example worker/fly.toml
+# Depuis la racine micro-saas-template-v2/
+# Le contexte Docker doit inclure worker/ ET engine/.
+cp worker/fly.toml.example fly.toml
 # Édite : remplace 'app = "worker-CHANGE_ME"' par ton nom
 
-cd worker
 fly launch --no-deploy --copy-config --name worker-<product>
 fly secrets set SHELL_URL=https://ton-app.vercel.app
 fly secrets set WORKER_API_TOKEN=<même que côté Vercel>
@@ -102,29 +119,42 @@ fly secrets set SHELL_SERVICE_TOKEN=<openssl rand -hex 32>
 fly deploy
 ```
 
-Le worker démarre, poll `/api/jobs/worker/claim`. Quand pas de job, il scale
-à 0 grâce à `auto_stop_machines=true` dans `fly.toml.example`.
+Le worker poll `/api/jobs/worker/claim`, traite les jobs, puis quitte
+proprement après `EXIT_WHEN_IDLE_SECONDS` sans job. Le `fly.toml.example`
+utilise `restart=on-failure` : une sortie propre laisse la Machine stoppée,
+un crash est redémarré.
 
-### 3. Bascule Vercel en mode live
+### 3. Autorise Vercel à piloter Fly
 
 ```bash
-vercel env add ENGINE_MODE              # remplace par "http" ou "docker"
-vercel env add SHELL_SERVICE_TOKEN      # même valeur que côté Fly
+vercel env add WORKER_PROVIDER          # "fly"
+vercel env add FLY_APP_NAME             # worker-<product>
+vercel env add FLY_API_TOKEN            # token Fly limité au worker
+vercel env add FLY_MACHINE_ID           # optionnel, si tu veux cibler 1 machine
+vercel env add SHELL_SERVICE_TOKEN      # même valeur que côté Fly, si uploads engine
 vercel deploy --prod
 ```
 
-Optionnel : tu peux laisser `ENGINE_MODE=mock` côté Vercel et activer le
-mode live uniquement via la table `site_config` (Supabase SQL Editor) :
+Laisse `ENGINE_MODE=mock` côté Vercel. En prod, le Shell ne lance jamais le
+moteur réel dans une route serverless : en `live`, il crée un job `pending`,
+appelle la Fly Machines API pour démarrer le worker si besoin, puis retourne
+`202`.
+
+Pour forcer un test live manuellement :
 
 ```sql
 update site_config set engine_mode = 'live' where id = true;
 ```
 
+Si aucun abonnement actif n'existe, le prochain webhook/cron remettra `mock`.
+Pour un test prolongé sans paiement réel, désactive temporairement le cron ou
+utilise un abonnement Stripe test `active`.
+
 ### 4. Active les crons Vercel
 
 `vercel.json` les déclare déjà :
 - `/api/cron/sweep-jobs` toutes les 5 min (récupère leases morts)
-- `/api/cron/auto-degrade` toutes les heures (économie de coûts)
+- `/api/cron/auto-degrade` toutes les heures (resynchronise billing → runtime)
 
 Vérifie sur Vercel Dashboard → ton projet → Crons que les 2 sont actifs.
 
@@ -144,15 +174,17 @@ Logs :
 
 Pour scaler les logs : Logtail (gratuit < 1GB/mois), Axiom (gratuit < 0.5TB/mois).
 
-### 6. Costs management — Auto-degrade
+### 6. Costs management — Billing gate
 
-L'auto-degrade est **activé par défaut** (`AUTO_DEGRADE_ENABLED=1`).
+Le billing gate est **activé par défaut** (`AUTO_DEGRADE_ENABLED=1`).
 
 Comportement :
-- Pas de job depuis 7 jours ET pas d'abonné payant → `engine_mode='mock'`
-- Le worker Fly reçoit 204 sur tous ses claims → scale à 0 → coût Fly = 0€
-- Premier vrai job ou paiement → `engine_mode='live'` → worker se réveille
-  automatiquement (Fly `auto_start_machines=true`)
+- aucun abonnement `active`/`trialing` non-free → `engine_mode='mock'`
+- abonnement `active`/`trialing` non-free → `engine_mode='live'`
+- webhook Stripe fait la bascule immédiatement après checkout/update/delete
+- cron horaire refait la même synchro si un webhook a été manqué
+- job `live` → Shell démarre le worker Fly via Machines API, si stoppé
+- worker idle → sortie propre après `EXIT_WHEN_IDLE_SECONDS`
 
 Override manuel via SQL :
 
@@ -163,7 +195,8 @@ update site_config set engine_mode = 'live' where id = true;
 -- Forcer maintenance (refus 503 sur /api/jobs/create)
 update site_config set engine_mode = 'maintenance', reason = 'planned upgrade' where id = true;
 
--- Désactiver l'auto-degrade : Vercel env AUTO_DEGRADE_ENABLED=0
+-- Désactiver la synchro cron (à éviter en prod)
+-- Vercel env AUTO_DEGRADE_ENABLED=0
 ```
 
 **Coût mensuel niveau 1 (estimation) :**
@@ -172,7 +205,7 @@ update site_config set engine_mode = 'maintenance', reason = 'planned upgrade' w
 |-----------|------------------------|----------------------|
 | Vercel Hobby | 0€ | 0€ (sous limites) |
 | Supabase free | 0€ | 0€ (sous 500MB DB) |
-| Fly worker | 0€ (scale 0) | 1-5€ (shared-cpu-1x) |
+| Fly worker | 0€ compute si Machine stoppée | quelques € selon durée CPU/RAM |
 | Stripe | 0€ | 1.4% + 0.25€/transac (pas un fixe) |
 | Domaine | ~10€/an | ~10€/an |
 | **Total mensuel** | **~1€** | **5-10€** |
@@ -258,6 +291,7 @@ npx supabase db push
 | `SUPABASE_SERVICE_ROLE_KEY` | Tous les 6 mois OU fuite | Supabase Dashboard → Settings → API → Reset |
 | `STRIPE_WEBHOOK_SECRET` | Tous les 12 mois OU fuite | Stripe Dashboard → recreate webhook |
 | `WORKER_API_TOKEN` | Tous les 6 mois | `openssl rand -hex 32` + update Vercel + Fly secrets |
+| `FLY_API_TOKEN` | Tous les 6 mois OU départ d'un admin | Fly Dashboard/CLI → nouveau token scoped + update Vercel |
 | `CRON_SECRET` | Tous les 6 mois | `openssl rand -hex 32` + update Vercel |
 | `SHELL_SERVICE_TOKEN` | Tous les 6 mois | `openssl rand -hex 32` + update Vercel + Fly |
 

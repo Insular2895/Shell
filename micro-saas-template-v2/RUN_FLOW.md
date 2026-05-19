@@ -291,12 +291,13 @@ même quand Claude touche au moteur.
 | Mode | Quand l'utiliser | Coût |
 |---|---|---|
 | `mock` | Dev front-only, pas de vrai moteur | 0 |
-| `docker` | Dev local avec moteur réel, ou worker Vercel/Fly | CPU local |
+| `docker` | Dev local avec moteur réel, ou worker Fly | CPU local / Fly selon durée |
 | `http` | Engine déployé en service (Fly.io, Railway, Modal, AWS ECS) | $/mois fixe |
 
 Stratégie recommandée :
 - **Dev** : `mock` puis `docker`
-- **Pré-prod / petits volumes** : `docker` lancé par une Vercel cron ou Fly Machines à la demande
+- **No-client / démo** : `site_config.engine_mode='mock'`, `WORKER_PROVIDER=none`
+- **Client payant** : queue Postgres + worker Fly démarré via Machines API
 - **Prod / gros volumes** : `http` vers un service permanent + queue Redis
 
 ## Modes du moteur (`mode` dans manifest.yaml)

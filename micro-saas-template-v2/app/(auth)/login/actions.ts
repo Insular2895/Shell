@@ -2,7 +2,7 @@
 
 /**
  * Server Actions pour login/signup.
- * Pattern OFFICIEL Supabase + Next.js 15 :
+ * Pattern OFFICIEL Supabase + Next.js 15+ :
  * https://supabase.com/docs/guides/auth/server-side/nextjs
  */
 import { redirect } from 'next/navigation';

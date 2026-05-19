@@ -5,8 +5,8 @@
 > Ce template est verrouillé. Tu construis le Shell une fois ; pour chaque
 > nouveau produit, tu changes uniquement la partie RUN (config + schema + adapter).
 
-> 🆕 **v2** : queue async (worker externe), auto-degrade pour économiser quand
-> pas d'utilisateurs, validation Ajv+Pydantic defense-in-depth, hooks Claude
+> 🆕 **v2** : queue async (worker externe), billing gate pour ne pas payer de
+> worker sans client actif, validation Ajv+Pydantic defense-in-depth, hooks Claude
 > Code, slash commands `/security-review` et `/cso`. Voir
 > [`CHANGELOG.md`](CHANGELOG.md) pour les 5 bugs critiques corrigés vs v1.
 
@@ -44,7 +44,7 @@ nouveau produit. [`CHANGELOG.md`](CHANGELOG.md) liste tous les correctifs.
 │  ton-engine-core            │         │  ton-saas-template          │
 │  (repo métier Python)       │         │  (clone de ce template)     │
 │                             │         │                             │
-│  - logique pure             │         │  - Shell Next.js 15         │
+│  - logique pure             │         │  - Shell Next.js 16         │
 │  - pip-installable          │  imports│  - Auth Supabase            │
 │  - testable avec pytest     │◄────────┤  - Billing Stripe           │
 │  - aucune dep au SaaS       │         │  - Dashboard, run, results  │
@@ -63,14 +63,19 @@ modifie jamais.
 
 | Couche | Choix | Pourquoi |
 |---|---|---|
-| Frontend | Next.js 15 (App Router) + TypeScript + Tailwind | SSR natif, déploiement gratuit Vercel, écosystème mature |
+| Frontend | Next.js 16 (App Router) + TypeScript + Tailwind | SSR natif, déploiement gratuit Vercel, écosystème mature |
 | Auth + DB + Storage | Supabase (Postgres + RLS + Storage) | Tout en un service, free tier 0 €, RLS multi-tenant gratuit |
 | Billing | Stripe (Checkout + Customer Portal + Webhooks) | Standard de l'industrie, pas de mensuel |
 | Engine runtime | Docker (Python par convention, mais agnostique) | N'importe quel repo qui peut être conteneurisé |
 | Hosting Shell | Vercel | Free Hobby tier suffit jusqu'aux 1ers clients |
-| Hosting Engine | Fly Machines / Railway / Modal (selon volume) | À la demande pour économiser |
+| Hosting Engine | Fly Machines par défaut | Démarrage/arrêt via billing Stripe + Machines API |
 
 **Coût avant clients : 0 €/mois** (sauf domaine, ~10 €/an).
+
+Runtime par défaut :
+- Sans abonnement `active`/`trialing` non-free : `engine_mode='mock'`, pas de worker.
+- Avec abonnement actif : `engine_mode='live'`, jobs en queue, worker Fly démarré à la demande.
+- Si le client arrête de payer : webhook Stripe + cron repassent en `mock` et stoppent le worker.
 
 ---
 
@@ -143,7 +148,7 @@ micro-saas-template/
 │   ├── proxy.ts                        ← délègue à updateSession, exclut webhooks
 │   ├── config/result.schema.ts         ← types de blocks (figé)
 │   │
-│   ├── package.json                    ← Next 15, React 19, Stripe v21, Supabase ssr 0.7
+│   ├── package.json                    ← Next 16, React 19, Stripe v21, Supabase ssr 0.7
 │   ├── vercel.json                     ← maxDuration par route critique
 │   ├── tsconfig.json, tailwind.config.ts, next.config.mjs, postcss.config.mjs
 │   └── .env.example

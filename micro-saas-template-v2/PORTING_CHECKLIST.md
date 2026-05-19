@@ -175,15 +175,18 @@ Champs supportés : `text`, `textarea`, `url`, `email`, `number`, `select`, `mul
 
 - [ ] `CRON_SECRET` configuré côté Vercel (cf `.env.example`)
 - [ ] `WORKER_API_TOKEN` identique côté Vercel et côté Fly
+- [ ] Sans client payant : `WORKER_PROVIDER=none` et `site_config.engine_mode='mock'`
+- [ ] Premier client payant : `WORKER_PROVIDER=fly`, `FLY_APP_NAME` et `FLY_API_TOKEN` configurés côté Vercel
 - [ ] Vérifier sur Vercel Dashboard que les 2 crons sont actifs (`/api/cron/sweep-jobs` toutes les 5 min, `/api/cron/auto-degrade` toutes les heures)
-- [ ] Si tu veux désactiver l'auto-degrade : `AUTO_DEGRADE_ENABLED=0` côté Vercel
-- [ ] Worker Fly : vérifier que `auto_stop_machines=true` dans `fly.toml` (sinon coût même quand inactif)
+- [ ] Ne désactive `AUTO_DEGRADE_ENABLED=0` que si tu pilotes manuellement le worker
+- [ ] Worker Fly : vérifier `EXIT_WHEN_IDLE_SECONDS` et `restart=on-failure` dans `fly.toml`
+- [ ] Test fallback : passer une subscription Stripe en `past_due`/`cancelled` → `site_config.engine_mode='mock'`
 
 ### Monitoring
 
 - [ ] Setup UptimeRobot ou BetterStack sur `/api/health` (alertes email/Slack)
 - [ ] Vérifier les Vercel logs : pas de PII/secrets loggés
-- [ ] Vérifier les Fly logs (`fly logs`) : worker poll toutes les 5s, pas d'erreur 401/500 en boucle
+- [ ] Vérifier les Fly logs (`fly logs`) : worker poll toutes les 5s, traite les jobs, puis sort proprement en idle
 
 ### Documentation produit
 

@@ -92,21 +92,22 @@ crashait sans retourner.
 
 ### 🆕 Nouvelles features v2
 
-#### Auto-degrade pour économie de coûts
+#### Billing gate pour économie de coûts
 
 `/api/cron/auto-degrade` (toutes les heures) :
-- Si pas de job depuis `AUTO_DEGRADE_DAYS` (default 7) ET pas d'abonné payant
-  actif → `site_config.engine_mode = 'mock'`
+- Si aucun abonnement Stripe `active`/`trialing` non-free
+  → `site_config.engine_mode = 'mock'`
+- Si au moins un abonnement payant est actif → `site_config.engine_mode='live'`
 - Le runner répond avec `output.example.json` au lieu d'appeler l'engine
-- Tu peux scale-to-0 ton worker Fly → coût ~0€ pendant les périodes vides
-- Réveil automatique dès qu'un job arrive ou qu'un user paye
+- Le worker Fly est démarré/arrêté via la Machines API si `WORKER_PROVIDER=fly`
+- Le worker sort proprement en idle (`EXIT_WHEN_IDLE_SECONDS`)
 
 Migration : table `site_config` (singleton) avec `engine_mode in ('live',
 'mock', 'maintenance')`. Lue par `/api/jobs/create` (refus 503 si
 maintenance) et `lib/runner.ts` (cache 30s).
 
-`worker/fly.toml.example` configuré avec `auto_stop_machines=true,
-min_machines_running=0`.
+`worker/fly.toml.example` utilise `restart=on-failure` : un crash redémarre,
+une sortie propre laisse la Machine stoppée.
 
 #### Circuit breaker + retry sur le runner HTTP
 

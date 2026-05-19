@@ -96,6 +96,10 @@ export async function runEngine(payload: RunPayload): Promise<RunResult> {
   }
 }
 
+export async function runMockEngine(): Promise<RunResult> {
+  return runMock();
+}
+
 // ----------------------------------------------------------------------------
 // Mode docker (dev local avec moteur réel)
 // ----------------------------------------------------------------------------

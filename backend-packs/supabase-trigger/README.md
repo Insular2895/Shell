@@ -5,7 +5,7 @@ Pattern queue + worker pour long-running jobs. Voir `pack.yaml` pour les détail
 Voir `micro-saas-template-v2/` pour une **implémentation complète** :
 - Queue Postgres SKIP LOCKED via fonction `claim_next_job()`
 - Worker Python sur Fly Machines (`worker/run_worker.py` + `worker/Dockerfile`)
-- Auto-degrade quand pas d'utilisateurs (`/api/cron/auto-degrade`)
+- Billing gate + auto-degrade (`Stripe webhook` + `/api/cron/auto-degrade`)
 - Sweep cron pour leases morts (`/api/cron/sweep-jobs`)
 - Idempotency Stripe webhooks (status processing/processed/failed)
 

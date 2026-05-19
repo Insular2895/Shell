@@ -1,7 +1,7 @@
 # AGENTS.md — Règles opérationnelles (lire en premier, rester court)
 
 ## Stack
-- Node ≥ 20 · Python 3.12 · Next.js 15 · TypeScript strict
+- Node ≥ 20 · Python 3.12 · Next.js 16 · TypeScript strict
 
 ## Avant chaque commit
 ```

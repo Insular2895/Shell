@@ -5,9 +5,9 @@
 
 ## Stack
 
-- Frontend : Next.js 15 + React 19 + Tailwind + shadcn/ui
+- Frontend : Next.js 16 + React 19 + Tailwind + shadcn/ui
 - Backend : Supabase (Postgres + Auth + Storage + RLS)
-- Jobs : Postgres SKIP LOCKED + worker externe (Fly Machines)
+- Jobs : Postgres SKIP LOCKED + worker externe (Fly Machines) piloté par Stripe
 - LLM gateway : Presidio (ai-privacy-gateway)
 - Identity resolution : Splink
 - Monitoring : Uptime Kuma + Sentry + OpenObserve
@@ -18,7 +18,7 @@
 
 - Validation defense-in-depth (Ajv côté Shell + Pydantic côté worker)
 - Webhook idempotency : status processing/processed/failed
-- Auto-degrade quand pas d'utilisateurs
+- Auto-degrade quand aucun abonnement payant actif
 - Append-only sur audit tables (DB triggers)
 - consent_ledger comme preuve légale
 - mart_sellable_leads comme seul gate d'export

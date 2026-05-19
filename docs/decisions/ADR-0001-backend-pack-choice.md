@@ -11,17 +11,20 @@ Plusieurs options pour le pattern backend de la factory :
 - NestJS + Prisma + Postgres dédié
 
 ## Decision
-**Pattern par défaut = Supabase + queue Postgres SKIP LOCKED + worker externe (Fly Machines).**
+**Pattern par défaut = Supabase + queue Postgres SKIP LOCKED + worker externe Fly Machines, gated par Stripe.**
 
 ## Consequences
 - ✅ Démarrage 0€ (Supabase free + Vercel free)
-- ✅ Scale-to-0 (auto-degrade + Fly auto-stop)
+- ✅ Pas de coût worker avant client actif (`engine_mode='mock'`)
+- ✅ Fallback automatique si le client arrête de payer (Stripe → mock + stop worker)
+- ✅ Fly Machines start/stop via API + worker qui sort proprement en idle
 - ✅ Pattern testé et stable (v2)
 - ⚠️ Limite ~10k jobs/jour avant besoin Redis/BullMQ
 - ⚠️ Vercel Hobby = personnel only, passer Pro pour clients
 
 ## Alternatives considered
 - Trigger.dev managed : payant, moins flexible
+- Render background worker : simple, mais worker continu donc moins adapté au zéro coût
 - BullMQ Redis : overkill MVP
 - NestJS : overkill MVP
 

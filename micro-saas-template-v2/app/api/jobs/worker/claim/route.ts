@@ -1,7 +1,7 @@
 /**
  * /api/jobs/worker/claim
  *
- * Endpoint appelé par un worker externe (Fly/Railway/Modal/cron) pour récupérer
+ * Endpoint appelé par le worker externe Fly pour récupérer
  * le prochain job à traiter. Pattern PostgreSQL "SKIP LOCKED" via la fonction
  * SQL `claim_next_job(worker_id, lease_seconds)` qui garantit qu'un job n'est
  * jamais leasé 2x par 2 workers concurrents.

@@ -202,21 +202,36 @@ alter table public.stripe_events
 create index if not exists stripe_events_status_idx on public.stripe_events(status);
 
 -- ----------------------------------------------------------------------------
--- 7. site_config : permet l'auto-degradation Shell
+-- 7. site_config : permet le mode zero-cost Shell
 -- ----------------------------------------------------------------------------
--- Une ligne unique (singleton). Permet au cron `auto-degrade` de basculer le
--- site en mode "mock" si pas d'utilisateur actif depuis N jours, pour réduire
--- les coûts (engine éteint, jobs renvoient mock). Réversible automatiquement
--- dès le premier vrai user.
+-- Une ligne unique (singleton). Le billing Stripe devient la source de vérité :
+-- aucun abonnement actif/trialing payant => mock, au moins un abonnement actif
+-- => live. Cela évite de payer un worker tant qu'il n'y a pas de client.
 create table if not exists public.site_config (
   id boolean primary key default true check (id),  -- empêche >1 ligne
-  engine_mode text not null default 'live'
+  engine_mode text not null default 'mock'
     check (engine_mode in ('live', 'mock', 'maintenance')),
   reason text,
   updated_at timestamptz not null default now()
 );
 
-insert into public.site_config (id) values (true) on conflict do nothing;
+insert into public.site_config (id, engine_mode, reason)
+values (true, 'mock', 'bootstrap: no active paid subscription')
+on conflict do nothing;
+
+update public.site_config
+set
+  engine_mode = 'mock',
+  reason = 'bootstrap: no active paid subscription',
+  updated_at = now()
+where id = true
+  and engine_mode = 'live'
+  and not exists (
+    select 1
+    from public.subscriptions
+    where status in ('active', 'trialing')
+      and plan_id <> 'free'
+  );
 
 alter table public.site_config enable row level security;
 

@@ -7,9 +7,9 @@
  *     Crée le job ET le complète en synchrone avec output.example.json,
  *     en moins de 2s. Pas de worker requis. Coût engine = 0€.
  *
- *   - mode 'live' (production normale) :
+ *   - mode 'live' (client payant actif) :
  *     Crée le job en `pending` et retourne 202. Un worker externe
- *     (Fly/Railway/Modal) le ramasse via /api/jobs/worker/claim.
+ *     Fly le ramasse via /api/jobs/worker/claim.
  *     Le client poll /api/jobs/{id} pour voir le résultat.
  *
  * Pourquoi NE PAS lancer l'engine ici en serverless :
@@ -30,8 +30,9 @@ import { createJob, createJobWithQuota, updateJobStatus } from '@/lib/jobs';
 import { checkQuota } from '@/lib/quota';
 import { rateLimit } from '@/lib/rateLimit';
 import { validateRunInput } from '@/lib/runSchemaValidator';
-import { runEngine } from '@/lib/runner';
+import { runMockEngine } from '@/lib/runner';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { reconcileWorkerRuntime } from '@/lib/workerLifecycle';
 import productConfig from '@/config/product.config';
 
 export const dynamic = 'force-dynamic';
@@ -137,12 +138,7 @@ export async function POST(req: Request) {
   // Mode live → on retourne 202 et on laisse le worker bosser
   if (mode === 'mock' || process.env.ENGINE_MODE === 'mock') {
     try {
-      const result = await runEngine({
-        user_id: user!.id,
-        job_id: job.id,
-        product_id: productConfig.id,
-        input: validation.value,
-      });
+      const result = await runMockEngine();
       await updateJobStatus(
         job.id,
         result.status === 'success' ? 'success' : 'error',
@@ -166,7 +162,13 @@ export async function POST(req: Request) {
     }
   }
 
-  // Mode live : queue, worker pickup
+  // Mode live : queue, worker pickup. If WORKER_PROVIDER=fly is configured,
+  // wake stopped Machines now; otherwise this is a no-op.
+  const workerRuntime = await reconcileWorkerRuntime(true, 'jobs:create');
+  if (workerRuntime.action === 'error') {
+    console.warn(`[jobs.create] worker wake failed provider=${workerRuntime.provider}`);
+  }
+
   return NextResponse.json(
     {
       jobId: job.id,

@@ -3,8 +3,7 @@ worker/run_worker.py
 
 Worker EXTERNE qui consomme la queue de jobs.
 
-Tu déploies ce script sur Fly Machines / Railway / Modal / un VPS Hetzner
-avec Coolify. Il fait une boucle :
+Tu déploies ce script sur Fly Machines par défaut. Il fait une boucle :
 
   1. POST /api/jobs/worker/claim  → reçoit un job (ou 204 = sleep)
   2. Lance engine/run_engine.py --input X --output Y
@@ -17,6 +16,7 @@ Variables d'env requises :
   - PRODUCT_ID                 : optionnel, pour worker mono-produit
   - LEASE_SECONDS              : default 900 (15 min)
   - POLL_INTERVAL_SECONDS      : default 5
+  - EXIT_WHEN_IDLE_SECONDS     : default 600 (0 = tourne en continu)
 
 Lancement local pour dev :
   cd worker && python run_worker.py
@@ -47,6 +47,7 @@ WORKER_ID = os.environ.get("WORKER_ID", f"{socket.gethostname()}-{uuid.uuid4().h
 PRODUCT_ID = os.environ.get("PRODUCT_ID")  # None = tous les produits
 LEASE_SECONDS = int(os.environ.get("LEASE_SECONDS", "900"))
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL_SECONDS", "5"))
+EXIT_WHEN_IDLE_SECONDS = int(os.environ.get("EXIT_WHEN_IDLE_SECONDS", "600"))
 ENGINE_PATH = "/app/engine/run_engine.py"
 
 
@@ -176,8 +177,12 @@ def run_engine(job: dict[str, Any]) -> tuple[str, Optional[dict], Optional[str],
 
 
 def main() -> None:
-    log.info(f"worker {WORKER_ID} starting, lease={LEASE_SECONDS}s, poll={POLL_INTERVAL}s")
+    log.info(
+        f"worker {WORKER_ID} starting, lease={LEASE_SECONDS}s, "
+        f"poll={POLL_INTERVAL}s, idle_exit={EXIT_WHEN_IDLE_SECONDS}s"
+    )
     consecutive_empty = 0
+    last_job_at = time.monotonic()
 
     while True:
         try:
@@ -189,6 +194,12 @@ def main() -> None:
 
         if job is None:
             consecutive_empty += 1
+            if (
+                EXIT_WHEN_IDLE_SECONDS > 0
+                and time.monotonic() - last_job_at >= EXIT_WHEN_IDLE_SECONDS
+            ):
+                log.info("worker idle threshold reached, exiting cleanly")
+                return
             # Backoff progressif si rien à faire (économie réseau/CPU)
             sleep_for = min(POLL_INTERVAL * (1 + consecutive_empty // 5), 60)
             time.sleep(sleep_for)
@@ -199,6 +210,7 @@ def main() -> None:
         log.info(f"claimed job={job_id} attempt={job['attempts']}")
 
         status, result, error, duration_ms = run_engine(job)
+        last_job_at = time.monotonic()
         log.info(f"completed job={job_id} status={status} duration={duration_ms}ms")
 
         try:

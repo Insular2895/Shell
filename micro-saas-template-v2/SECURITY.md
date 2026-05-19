@@ -57,7 +57,7 @@ les failles non patchées.
 | Upload de fichier malicieux | Type/size check côté `/api/upload`. À durcir si tu acceptes >10MB ou des binaires non-doc. |
 | URLs signées partagées | Expiration courte (1h par défaut) sur les signed URLs. |
 
-### 5. Worker externe (Fly/Railway/Modal)
+### 5. Worker externe (Fly par défaut)
 
 | Menace | Mitigation v2 |
 |--------|---------------|

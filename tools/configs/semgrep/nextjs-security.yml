@@ -1,7 +1,7 @@
 rules:
   - id: nextjs-no-cookie-without-httponly
     pattern: cookies().set($NAME, $VALUE)
-    pattern-not: cookies().set({ ..., httpOnly: true, ... })
+    pattern-not: 'cookies().set({ ..., httpOnly: true, ... })'
     message: "Cookies should be httpOnly when storing tokens."
     languages: [typescript]
     severity: WARNING

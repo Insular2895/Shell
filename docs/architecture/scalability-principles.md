@@ -4,7 +4,7 @@
 
 ## Principes
 
-1. **Scale to 0 d'abord** : auto-degrade quand pas d'utilisateurs (cf v2)
+1. **Scale to 0 d'abord** : pas de worker sans abonnement actif payant (cf v2)
 2. **Stateless avant stateful** : Shell stateless, state en DB
 3. **Async par défaut** pour tout > 5s : queue + worker
 4. **Idempotency** sur toute opération qui peut être répliquée (webhooks, retries)
@@ -21,7 +21,7 @@
 | Idempotency | v2 stripe webhook (status processing/processed/failed) |
 | Rate limiting | v2 lib/rateLimit.ts (sliding window) |
 | Retry + jitter | v2 lib/circuitBreaker.ts retryWithBackoff |
-| Auto-degrade | v2 site_config + cron auto-degrade |
+| Billing gate / auto-degrade | v2 Stripe webhook + site_config + cron auto-degrade |
 | Append-only logs | growth-data-layer consent_ledger + lead_delivery_log |
 
 ## Anti-patterns

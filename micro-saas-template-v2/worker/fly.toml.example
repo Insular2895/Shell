@@ -1,16 +1,30 @@
 # =============================================================================
 # fly.toml — déploiement worker sur Fly Machines
 #
-# Particularité : on configure auto_stop_machines=true et min_machines_running=0
-# Le worker scale à 0 quand inactif (cron Vercel a basculé en mock-mode), ce
-# qui réduit le coût à 0€/mois pendant les périodes sans utilisateurs.
+# Particularité : ce worker n'expose pas de service HTTP public.
+# Il est démarré/arrêté par le Shell via la Fly Machines API :
+#   - Stripe actif/trialing -> site_config.engine_mode='live' + start Machine
+#   - aucun client payant   -> site_config.engine_mode='mock' + stop Machine
+#
+# Le process s'arrête aussi tout seul après EXIT_WHEN_IDLE_SECONDS sans job.
+# Avec restart=on-failure, une sortie propre laisse la Machine stoppée.
 #
 # Setup initial :
+#   cd micro-saas-template-v2
+#   cp worker/fly.toml.example fly.toml
+#   # édite app = "worker-..."
 #   fly launch --no-deploy --copy-config --name worker-monproduit
 #   fly secrets set SHELL_URL=https://app.tonproduit.com
 #   fly secrets set WORKER_API_TOKEN=xxx
 #   fly secrets set OPENAI_API_KEY=sk-...   # si engine en a besoin
+#   fly secrets set SHELL_SERVICE_TOKEN=xxx # si l'engine upload vers Shell
 #   fly deploy
+#
+# Côté Vercel, configurer ensuite :
+#   WORKER_PROVIDER=fly
+#   FLY_APP_NAME=worker-monproduit
+#   FLY_API_TOKEN=<token Fly scoped>
+#   FLY_MACHINE_ID=<optionnel, si tu veux cibler une Machine précise>
 # =============================================================================
 
 app = "worker-CHANGE_ME"  # à remplacer par produit
@@ -24,38 +38,16 @@ primary_region = "cdg"     # Paris CDG, change selon ton cas
   PYTHONUNBUFFERED = "1"
   LEASE_SECONDS = "900"
   POLL_INTERVAL_SECONDS = "5"
+  EXIT_WHEN_IDLE_SECONDS = "600"
 
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"
 
-# Auto-scale : 0 machines quand pas de boulot.
-# Le Shell reste up sur Vercel, mais le worker s'arrête → coût ~0€.
-# Le Shell réveille un nouveau worker au premier job en pending.
 [deploy]
   strategy = "rolling"
 
-[[services]]
-  protocol = "tcp"
-  internal_port = 8080  # Pas utilisé (worker poll, pas serveur), mais Fly veut un port
-
-  [services.concurrency]
-    type = "connections"
-    hard_limit = 1
-    soft_limit = 1
-
-[checks]
-  [checks.health]
-    type = "http"
-    interval = "60s"
-    timeout = "10s"
-    grace_period = "30s"
-    method = "get"
-    path = "/health"
-    port = 8080
-
-# Sleep agressif quand pas d'activité — économie cash
-[machine]
-  auto_stop_machines = true
-  auto_start_machines = true
-  min_machines_running = 0
+[[restart]]
+  policy = "on-failure"
+  retries = 3
+  processes = ["app"]

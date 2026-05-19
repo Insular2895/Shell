@@ -73,10 +73,13 @@ ou `json` pour de l'arbitraire que tu rendras avec un viewer custom plus tard.
   → Shell valide via run.schema.json (Ajv)
   → Shell rate-limits (10/min/user)
   → Shell vérifie quota (subscriptions table)
-  → Shell INSERT job avec status='pending'
-  → Shell répond 202 jobId
+  → Shell lit site_config.engine_mode
+  → si mock : INSERT job + résultat output.example.json synchronement
+  → si live : INSERT job avec status='pending'
+  → Shell démarre le worker externe si WORKER_PROVIDER=fly
+  → Shell répond jobId
 
-[worker externe, Fly/Railway/Modal]
+[worker externe, Fly par défaut]
   → POST /api/jobs/worker/claim avec WORKER_API_TOKEN
   → reçoit job (lease 15 min)
   → lance engine/run_engine.py --input X --output Y
@@ -115,7 +118,7 @@ Tout template DOIT proposer un `ENGINE_MODE=mock` qui retourne `output.example.j
 sans appeler le moteur réel. Permet :
 - Tests Shell sans dépendance moteur
 - Démo / waitlist sans coût engine
-- Auto-degrade quand pas d'utilisateur (cf `ops-autopilot/`)
+- Billing gate : aucun abonnement actif payant => mock + worker stoppé
 
 `output.example.json` doit contenir au moins **un exemple par type de block utilisé** par le produit.
 
