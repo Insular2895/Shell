@@ -26,6 +26,9 @@ export type QuotaResult = {
   reason?: string;
   runsRemaining?: number | 'unlimited';
   planId?: string;
+  runsLimit?: number | 'unlimited';
+  periodStart?: Date;
+  periodEnd?: Date;
 };
 
 export async function checkQuota(userId: string): Promise<QuotaResult> {
@@ -47,7 +50,7 @@ export async function checkQuota(userId: string): Promise<QuotaResult> {
 
   // Plan illimité
   if (plan.runsPerMonth === 'unlimited') {
-    return { allowed: true, runsRemaining: 'unlimited', planId: plan.id };
+    return { allowed: true, runsRemaining: 'unlimited', runsLimit: 'unlimited', planId: plan.id };
   }
 
   // Période de calcul des runs : période de subscription Stripe pour les
@@ -79,13 +82,19 @@ export async function checkQuota(userId: string): Promise<QuotaResult> {
       allowed: false,
       reason: 'quota_exceeded',
       runsRemaining: 0,
+      runsLimit: plan.runsPerMonth,
       planId: plan.id,
+      periodStart,
+      periodEnd,
     };
   }
 
   return {
     allowed: true,
     runsRemaining: remaining,
+    runsLimit: plan.runsPerMonth,
     planId: plan.id,
+    periodStart,
+    periodEnd,
   };
 }

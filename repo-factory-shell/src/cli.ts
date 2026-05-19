@@ -2,8 +2,8 @@
 /**
  * factory CLI — entry point.
  *
- * Status: skeleton. Most commands are stubs that print "phase 1 — to implement".
- * The structure is in place so commands can be filled in incrementally.
+ * Status: MVP executable. Commands favor conservative local operations and
+ * write reports/artifacts that can be reviewed before production use.
  */
 import { Command } from 'commander';
 import chalk from 'chalk';

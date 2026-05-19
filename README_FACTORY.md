@@ -1,14 +1,9 @@
 # README_FACTORY.md — App / SaaS Factory
 
-> **Objectif à terme :** transformer une idée, une URL, ou un repo Python métier
+> Cette factory transforme **une idée, une URL, ou un repo Python métier**
 > en SaaS déployable, sécurisé, mesurable et opérationnellement piloté.
->
-> **État aujourd'hui :** le template SaaS (`micro-saas-template-v2/`) est opérationnel.
-> Les briques factory sont majoritairement en scaffold — architecture définie,
-> code non encore écrit. Voir [`CURRENT_STATUS.md`](CURRENT_STATUS.md) pour
-> l'état exact de chaque brique.
 
-## Ce que la factory fera (pipeline cible)
+## Ce que la factory fait
 
 ```
 Idée / URL / Screenshot
@@ -42,23 +37,23 @@ Une app déployée
 
 | Dossier | Rôle | Statut MVP |
 |---------|------|------------|
-| `repo-factory-shell/` | CLI : audit, normalize, connect, scan | Scaffold (CLI à coder phase 1) |
-| `reference-site-analyzer/` | URL/screenshot → feature spec en cleanroom | Scaffold (intégrations Playwright/Firecrawl à coder phase 2) |
-| `feature-generation/` | Idée → blueprint UI/API/worker/sécurité/tests | Scaffold (générateurs à coder phase 2) |
-| `modules-registry/` | Composants/modules versionnés réutilisables | Scaffold (modules MVP à écrire phase 2) |
-| `backend-packs/` | Backend patterns prévalidés (Supabase, Trigger.dev, BullMQ, FastAPI, NestJS) | Scaffold (1 pack MVP + pointers vers v2) |
-| `security-packs/` | Scans Semgrep/Gitleaks/OSV/Trivy/CodeQL/ZAP | Scaffold (configs minimales) |
-| `ai-privacy-gateway/` | Presidio : anonymise/pseudonymise avant LLM | Scaffold (recognizers FR à activer phase 1) |
+| `repo-factory-shell/` | CLI : audit, normalize, connect, scan | **MVP exécutable** |
+| `reference-site-analyzer/` | URL/screenshot → feature spec en cleanroom | Cleanroom prompts + CLI `site:analyze` MVP |
+| `feature-generation/` | Idée → blueprint UI/API/worker/sécurité/tests | CLI `feature:generate` MVP + contrats |
+| `modules-registry/` | Composants/modules versionnés réutilisables | MVP contrats de modules |
+| `backend-packs/` | Backend patterns prévalidés (Supabase, Trigger.dev, BullMQ, FastAPI, NestJS) | MVP pack registry |
+| `security-packs/` | Scans Semgrep/Gitleaks/OSV/Trivy/CodeQL/ZAP | **MVP exécutable** |
+| `ai-privacy-gateway/` | Presidio : anonymise/pseudonymise avant LLM | **MVP exécutable**, Redis chiffré requis en prod |
 | `growth-data-layer/` | Collecte, consentement, identity, datasets vendables | **MVP fait** : schémas SQL + politiques |
-| `ops-packs/` | Coolify, Uptime Kuma, Sentry, Renovate, Restic | Scaffold |
-| `ops-autopilot/` | Fallback, quotas, modes site, blocage exports | Scaffold (status service à coder phase 4) |
-| `automation-packs/` | Workflows n8n versionnés | Scaffold (policy + template-bank vetting) |
-| `factory-control-center/` | Dashboard P&L + incidents + sécurité multi-sites | Scaffold (Next.js cockpit phase 4) |
+| `ops-packs/` | Coolify, Uptime Kuma, Sentry, Renovate, Restic | MVP policies/config examples |
+| `ops-autopilot/` | Fallback, quotas, modes site, blocage exports | MVP action policy |
+| `automation-packs/` | Workflows n8n versionnés | MVP workflows/policies |
+| `factory-control-center/` | Dashboard P&L + incidents + sécurité multi-sites | **MVP exécutable** : APIs admin + schema |
 | `finance-ledger/` | Revenus, coûts, P&L par site_id | **MVP fait** : schémas + policies |
 | `agent-quality-system/` | Skills, router, hooks, approval policy pour Claude/Codex | **MVP fait** : règles + approval policy |
-| `context-engine/` | Graphify : éviter token-burn | Scaffold |
-| `dev-orchestrator/` | Tâches IA bornées async | Scaffold |
-| `docs/` | Doctrine (architecture, sécurité, design, ops) | Scaffold (à enrichir au fil de l'eau) |
+| `context-engine/` | Graphify : éviter token-burn | MVP policies/context packets |
+| `dev-orchestrator/` | Tâches IA bornées async | MVP detectors/routing contracts |
+| `docs/` | Doctrine (architecture, sécurité, design, ops) | MVP doctrine |
 | `legal/` | Cleanroom, licences, data-selling | **MVP fait** |
 
 ## La règle absolue : la chaîne data
@@ -103,12 +98,10 @@ Voir `docs/factory/00-overview.md` pour le détail. En résumé :
 
 ## Lis ces fichiers en premier
 
-1. [`CURRENT_STATUS.md`](CURRENT_STATUS.md) — état réel aujourd'hui (mock, scaffold, opérationnel)
-2. [`HAPPY_PATH.md`](HAPPY_PATH.md) — du clone au résultat en 6 étapes
-3. `README_FACTORY.md` (tu y es) — vision factory complète
-4. `AGENT_RULES.md` — doctrine globale agents (Claude/Codex)
-5. `QUALITY_GATES.md` — checks PR obligatoires
-6. `RUN_SCHEMA.md` — contrat universel input/output engine
-7. `legal/data-selling-policy.md` — règle data vendable
-8. `legal/cleanroom-policy.md` — règle anti-copie
-9. `agent-quality-system/policies/approval-policy.yml` — ce qui est auto vs ce qui demande validation
+1. `README_FACTORY.md` (tu y es)
+2. `AGENT_RULES.md` — doctrine globale agents (Claude/Codex)
+3. `QUALITY_GATES.md` — checks PR obligatoires
+4. `RUN_SCHEMA.md` — contrat universel input/output engine
+5. `legal/data-selling-policy.md` — règle data vendable
+6. `legal/cleanroom-policy.md` — règle anti-copie
+7. `agent-quality-system/policies/approval-policy.yml` — ce qui est auto vs ce qui demande validation

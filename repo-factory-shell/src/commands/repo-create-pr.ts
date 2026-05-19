@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { execaCommand } from 'execa';
 
 /**
  * repoCreatePrCmd — create a PR via GitHub CLI
@@ -11,6 +12,10 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function repoCreatePrCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] repoCreatePrCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  const title = String(args[0] ?? 'Factory update');
+  const { stdout } = await execaCommand(
+    `gh pr create --fill --title ${JSON.stringify(title)}`,
+    { shell: true },
+  );
+  console.log(stdout || chalk.green('PR created'));
 }

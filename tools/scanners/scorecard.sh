@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tools/scanners/scorecard.sh — OpenSSF Scorecard
-# Phase 2 — scaffold only.
+# Optional repository posture scan.
 set -euo pipefail
 TARGET="${1:-.}"
 OUT="${REPORT_DIR:-reports/security}/scorecard.json"

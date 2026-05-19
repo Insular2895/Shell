@@ -200,7 +200,7 @@ create index if not exists decision_queue_pending_idx on decision_queue(proposed
 -- Vue qui aggrège les exports pour le cockpit (sans dupliquer la donnée).
 -- Suppose que growth-data-layer.lead_delivery_log existe.
 -- create or replace view data_exports_summary as ...
--- (à coder phase 4 quand growth-data-layer est branché au cockpit)
+-- La vue sera activée quand growth-data-layer est branché au cockpit.
 
 -- ----------------------------------------------------------------------------
 -- 10. Vue P&L par site (mart calculé)

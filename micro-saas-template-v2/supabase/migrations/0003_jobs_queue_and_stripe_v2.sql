@@ -267,3 +267,44 @@ end;
 $$;
 
 revoke all on function public.try_consume_quota(uuid, timestamptz, timestamptz, int) from public, anon, authenticated;
+
+-- Production path: check quota and insert the job while holding the same lock.
+-- Called by /api/jobs/create through the service-role client.
+create or replace function public.create_job_with_quota(
+  p_user_id uuid,
+  p_product_id text,
+  p_input jsonb,
+  p_period_start timestamptz,
+  p_period_end timestamptz,
+  p_limit int
+)
+returns public.jobs
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_count int;
+  v_job public.jobs;
+begin
+  perform 1 from auth.users where id = p_user_id for update;
+
+  select count(*) into v_count from public.jobs
+  where user_id = p_user_id
+    and created_at >= p_period_start
+    and created_at < p_period_end
+    and status in ('pending', 'running', 'success');
+
+  if v_count >= p_limit then
+    return null;
+  end if;
+
+  insert into public.jobs (user_id, product_id, status, input)
+  values (p_user_id, p_product_id, 'pending', p_input)
+  returning * into v_job;
+
+  return v_job;
+end;
+$$;
+
+revoke all on function public.create_job_with_quota(uuid, text, jsonb, timestamptz, timestamptz, int) from public, anon, authenticated;

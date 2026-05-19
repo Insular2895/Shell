@@ -26,7 +26,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireUserOr401 } from '@/lib/auth';
-import { createJob, updateJobStatus } from '@/lib/jobs';
+import { createJob, createJobWithQuota, updateJobStatus } from '@/lib/jobs';
 import { checkQuota } from '@/lib/quota';
 import { rateLimit } from '@/lib/rateLimit';
 import { validateRunInput } from '@/lib/runSchemaValidator';
@@ -108,12 +108,30 @@ export async function POST(req: Request) {
     );
   }
 
-  // 7. Création du job
-  const job = await createJob({
-    userId: user!.id,
-    productId: productConfig.id,
-    input: validation.value,
-  });
+  // 7. Création du job. Pour les plans bornés, création + quota sont atomiques
+  // dans Postgres pour éviter les dépassements par requêtes concurrentes.
+  const job =
+    quota.runsLimit === 'unlimited'
+      ? await createJob({
+          userId: user!.id,
+          productId: productConfig.id,
+          input: validation.value,
+        })
+      : await createJobWithQuota({
+          userId: user!.id,
+          productId: productConfig.id,
+          input: validation.value,
+          periodStart: quota.periodStart!,
+          periodEnd: quota.periodEnd!,
+          limit: quota.runsLimit!,
+        });
+
+  if (!job) {
+    return NextResponse.json(
+      { error: 'quota_exceeded' },
+      { status: 402 },
+    );
+  }
 
   // 8. Mode mock → complétion synchrone (pas de worker)
   // Mode live → on retourne 202 et on laisse le worker bosser

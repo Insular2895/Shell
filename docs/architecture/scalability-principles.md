@@ -19,7 +19,7 @@
 | Queue + worker | v2 jobs system + supabase-trigger pack |
 | Circuit breaker | v2 lib/circuitBreaker.ts (engine HTTP calls) |
 | Idempotency | v2 stripe webhook (status processing/processed/failed) |
-| Rate limiting | v2 lib/rateLimit.ts (sliding window in-memory → upgrade Redis multi-instance, cf [cache-layer.md](cache-layer.md)) |
+| Rate limiting | v2 lib/rateLimit.ts (sliding window) |
 | Retry + jitter | v2 lib/circuitBreaker.ts retryWithBackoff |
 | Auto-degrade | v2 site_config + cron auto-degrade |
 | Append-only logs | growth-data-layer consent_ledger + lead_delivery_log |

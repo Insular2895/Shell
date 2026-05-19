@@ -1,9 +1,7 @@
 # Build graph
 
 ```bash
-factory repo:index .
-# OR (manual)
-node scripts/build-graph.js  # (à coder phase 3)
+factory repo:audit .
 ```
 
 Sortie : `context-engine/repo-graph/graph.json`.

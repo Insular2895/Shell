@@ -37,9 +37,9 @@ Avec gateway :
 
 1. `policies/ai-data-policy.yml` — règles par champ
 2. `presidio/recognizers/` — recognizers custom
-3. `src/detect-pii.ts` (à coder phase 1)
-4. `src/redact.ts` (à coder phase 1)
-5. `src/anonymize.ts` (à coder phase 2)
+3. `src/detect-pii.ts` — wrapper Presidio Analyzer
+4. `src/redact.ts` — redaction irréversible
+5. `src/anonymize.ts` — pseudonymisation réversible avec Redis chiffré en prod
 6. `tests/` — tests unitaires (couverture des cas frontaliers)
 
 ## Test obligatoire
@@ -47,3 +47,9 @@ Avec gateway :
 `tests/prompt-leak.test.ts` : envoie un input "Jean Dupont, jean@dupont.fr,
 0612345678" → vérifie qu'aucun de ces tokens n'apparaît dans l'appel OpenAI
 mocké.
+
+## Production
+
+- `REDIS_URL` obligatoire pour `pseudonymize` en production.
+- `AI_MAPPING_ENCRYPTION_KEY` obligatoire pour chiffrer les mappings Redis.
+- Le store mémoire est réservé aux tests/dev (`AI_GATEWAY_ALLOW_MEMORY_STORE=1`).

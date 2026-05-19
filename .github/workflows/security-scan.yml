@@ -22,7 +22,7 @@ jobs:
     container: returntocorp/semgrep
     steps:
       - uses: actions/checkout@v4
-      - run: semgrep ci --config p/owasp-top-ten --config p/typescript --config p/python --json --output semgrep.json
+      - run: semgrep ci --config p/owasp-top-ten --config p/typescript --config p/python --json --output semgrep.json --error
       - uses: actions/upload-artifact@v4
         with:
           name: semgrep-report
@@ -32,4 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v1
+      - uses: google/osv-scanner-action/osv-scanner-action@v2
+        with:
+          scan-args: |-
+            --recursive
+            .

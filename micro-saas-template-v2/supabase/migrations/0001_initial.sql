@@ -46,12 +46,9 @@ create policy "users insert own jobs"
   to authenticated
   with check ((select auth.uid()) = user_id);
 
-drop policy if exists "users update own jobs" on public.jobs;
-create policy "users update own jobs"
-  on public.jobs for update
-  to authenticated
-  using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
+-- No authenticated UPDATE policy: job state/result is system-owned and updated
+-- only by service-role API handlers/workers. Users read their own jobs but
+-- cannot forge status/result through the Supabase client.
 
 -- ============================================================================
 -- Table : subscriptions

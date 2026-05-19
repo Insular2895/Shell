@@ -1,17 +1,14 @@
 /**
- * middleware.ts (à la racine)
+ * proxy.ts
  *
+ * Remplace l'ancienne convention middleware.ts depuis Next 16.
  * Délègue à `updateSession()` qui contient le pattern officiel Supabase.
- * Ne modifie pas ce fichier — touche `lib/supabase/middleware.ts` à la place.
- *
- * IMPORTANT : le matcher EXCLUT explicitement les webhooks Stripe et autres
- * endpoints qui n'ont pas de cookie d'auth (sinon → 401 et Stripe retry).
  */
 
 import { type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 

@@ -21,5 +21,5 @@
 ## Outils MVP
 
 - Tree-sitter pour AST
-- Custom script `factory repo:index` (à coder phase 1)
+- `factory repo:audit` comme signal MVP, puis graph spécialisé quand Graphify est disponible
 - Phase 2 : Graphify si accès dispo

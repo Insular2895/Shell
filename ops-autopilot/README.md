@@ -7,7 +7,7 @@ Cf `AGENT_RULES.md` pour les règles agents.
 
 ## Statut
 
-Scaffold MVP. Voir le spec original (`README_FACTORY.md`) pour le détail des
-sous-dossiers et fichiers prévus. Les implémentations concrètes (CLI,
-extracteurs, dashboards UI, etc.) arrivent par phases — voir le plan de
-construction dans `README_FACTORY.md`.
+MVP policy pack. `decision-engine/action-policy.yml` définit les actions
+autorisées, les actions avec approbation et les actions interdites sans humain.
+L'exécution opérationnelle passe par le Factory Control Center et les workflows
+CI jusqu'à l'ajout de detectors dédiés.

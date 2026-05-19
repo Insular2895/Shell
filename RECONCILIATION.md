@@ -1,6 +1,6 @@
 # RECONCILIATION.md — Comment tout s'emboîte
 
-> Ce repo (`Insular2895/templates`) contient à la fois des **briques factory**
+> Ce repo (`Insular2895/Shell`) contient à la fois des **briques factory**
 > (les ~18 dossiers ajoutés en v2) et des **templates SaaS concrets**
 > (`micro-saas-template-v2/`). Ce fichier explique qui dépend de qui, et
 > comment éviter la confusion.

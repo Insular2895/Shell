@@ -22,9 +22,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: micro-saas-template-v2/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - run: npm ci
+      - run: npm ci --workspace micro-saas-template-v2
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
@@ -40,3 +40,5 @@ jobs:
           ENGINE_MODE: mock
           WORKER_API_TOKEN: xxx
           CRON_SECRET: xxx
+          MAX_USER_UPLOAD_BYTES: 10485760
+          MAX_ENGINE_UPLOAD_BYTES: 26214400

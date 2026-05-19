@@ -3,16 +3,25 @@
 # scripts/new-product.sh
 # Duplique le template en un nouveau repo de produit prêt à être adapté.
 #
-# Usage : ./scripts/new-product.sh
+# Usage :
+#   ./scripts/new-product.sh
+#   ./scripts/new-product.sh "PlaylistBrief" "playlistbrief" "playlistbrief.com" "#FF0033" "job" "https://github.com/acme/core"
 
 set -euo pipefail
 
-read -p "Nom du produit (ex: PlaylistBrief) : " PRODUCT_NAME
-read -p "ID kebab-case (ex: playlistbrief) : " PRODUCT_ID
-read -p "Domaine (ex: playlistbrief.com) : " DOMAIN
-read -p "Couleur principale (#hex, ex: #FF0033) : " PRIMARY_COLOR
-read -p "Mode du moteur (job/service) : " ENGINE_MODE
-read -p "Repo GitHub source (URL) : " SOURCE_REPO
+PRODUCT_NAME="${1:-}"
+PRODUCT_ID="${2:-}"
+DOMAIN="${3:-}"
+PRIMARY_COLOR="${4:-}"
+ENGINE_MODE="${5:-}"
+SOURCE_REPO="${6:-}"
+
+[ -n "$PRODUCT_NAME" ] || read -p "Nom du produit (ex: PlaylistBrief) : " PRODUCT_NAME
+[ -n "$PRODUCT_ID" ] || read -p "ID kebab-case (ex: playlistbrief) : " PRODUCT_ID
+[ -n "$DOMAIN" ] || read -p "Domaine (ex: playlistbrief.com) : " DOMAIN
+[ -n "$PRIMARY_COLOR" ] || read -p "Couleur principale (#hex, ex: #FF0033) : " PRIMARY_COLOR
+[ -n "$ENGINE_MODE" ] || read -p "Mode du moteur (job/service) : " ENGINE_MODE
+[ -n "$SOURCE_REPO" ] || read -p "Repo GitHub source (URL) : " SOURCE_REPO
 
 TARGET_DIR="../${PRODUCT_ID}-saas"
 

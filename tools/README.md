@@ -8,11 +8,11 @@ Scripts shell, scanners, helpers.
 tools/
 ├── scanners/
 │   ├── run-all.sh         # lance tous les scans (gitleaks, semgrep, osv, trivy)
-│   ├── gitleaks.sh        # à coder
-│   ├── semgrep.sh         # à coder
-│   ├── osv.sh             # à coder
-│   ├── trivy.sh           # à coder
-│   └── aggregate-score.sh # à coder phase 1
+│   ├── gitleaks.sh        # secrets
+│   ├── semgrep.sh         # SAST
+│   ├── osv.sh             # dépendances
+│   ├── trivy.sh           # filesystem/container deps
+│   └── aggregate-score.sh # rapport final
 └── configs/
     ├── semgrep/           # règles Semgrep custom (à enrichir)
     ├── gitleaks/gitleaks.toml

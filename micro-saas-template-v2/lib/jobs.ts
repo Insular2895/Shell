@@ -5,7 +5,7 @@
  * puis stocke le résultat. Le frontend poll via /api/jobs/[id].
  */
 
-import { createServerClient } from './supabase/server';
+import { createServerClient, createServiceRoleClient } from './supabase/server';
 import type { RunResult } from '@/config/result.schema';
 
 export type JobStatus = 'pending' | 'running' | 'success' | 'error' | 'cancelled' | 'timed_out';
@@ -27,7 +27,7 @@ export async function createJob(params: {
   productId: string;
   input: Record<string, unknown>;
 }): Promise<Job> {
-  const supabase = await createServerClient();
+  const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from('jobs')
     .insert({
@@ -42,8 +42,29 @@ export async function createJob(params: {
   return data as Job;
 }
 
+export async function createJobWithQuota(params: {
+  userId: string;
+  productId: string;
+  input: Record<string, unknown>;
+  periodStart: Date;
+  periodEnd: Date;
+  limit: number;
+}): Promise<Job | null> {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase.rpc('create_job_with_quota', {
+    p_user_id: params.userId,
+    p_product_id: params.productId,
+    p_input: params.input,
+    p_period_start: params.periodStart.toISOString(),
+    p_period_end: params.periodEnd.toISOString(),
+    p_limit: params.limit,
+  });
+  if (error) throw error;
+  return data as Job | null;
+}
+
 export async function updateJobStatus(jobId: string, status: JobStatus, extra: Partial<Pick<Job, 'result' | 'error'>> = {}) {
-  const supabase = await createServerClient();
+  const supabase = createServiceRoleClient();
   const { error } = await supabase
     .from('jobs')
     .update({ status, ...extra, updated_at: new Date().toISOString() })

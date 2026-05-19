@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { execaCommand } from 'execa';
 
 /**
  * securityScanCmd — run security scanners (delegates to tools/scanners/)
@@ -11,6 +12,13 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function securityScanCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] securityScanCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  const target = String(args[0] ?? '.');
+  console.log(chalk.blue(`Running security scan on ${target}`));
+  const { stdout, stderr, exitCode } = await execaCommand(
+    `bash tools/scanners/run-all.sh ${JSON.stringify(target)}`,
+    { shell: true, reject: false },
+  );
+  if (stdout) console.log(stdout);
+  if (stderr) console.error(stderr);
+  if (exitCode !== 0) process.exitCode = exitCode;
 }

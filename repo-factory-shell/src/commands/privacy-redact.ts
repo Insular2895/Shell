@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { promises as fs } from 'node:fs';
 
 /**
  * privacyRedactCmd — redact PII in a JSON/text file via Presidio
@@ -11,6 +12,13 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function privacyRedactCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] privacyRedactCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  const file = String(args[0] ?? '');
+  if (!file) throw new Error('privacy:redact requires a file path');
+  const raw = await fs.readFile(file, 'utf-8');
+  const redacted = raw
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[REDACTED_EMAIL]')
+    .replace(/(?:\+33|0)\s?[1-9](?:[\s.-]?\d{2}){4}/g, '[REDACTED_PHONE]')
+    .replace(/\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}\b/g, '[REDACTED_IBAN]');
+  process.stdout.write(redacted);
+  console.error(chalk.green(`\nRedacted ${file}`));
 }

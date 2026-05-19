@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { securityScanCmd } from './security-scan.js';
 
 /**
  * repoScanCmd — run all security scanners on a repo (delegates to tools/scanners/run-all.sh)
@@ -11,6 +12,6 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function repoScanCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] repoScanCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  console.log(chalk.blue('Delegating repo scan to security scanners'));
+  await securityScanCmd(args[0] ?? '.');
 }

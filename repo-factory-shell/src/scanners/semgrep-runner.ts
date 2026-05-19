@@ -8,5 +8,5 @@ export async function runSemgrep(target: string): Promise<{ exitCode: number; re
     stdio: 'inherit',
     reject: false,
   });
-  return { exitCode, reportPath: 'reports/security/semgrep.json' };
+  return { exitCode: exitCode ?? 1, reportPath: 'reports/security/semgrep.json' };
 }

@@ -140,7 +140,7 @@ micro-saas-template/
 │   │   ├── 0001_initial.sql            ← jobs + subscriptions + stripe_events + usage_events + RLS
 │   │   └── 0002_storage.sql            ← buckets + RLS storage.objects
 │   │
-│   ├── middleware.ts                   ← délègue à updateSession, exclut webhooks
+│   ├── proxy.ts                        ← délègue à updateSession, exclut webhooks
 │   ├── config/result.schema.ts         ← types de blocks (figé)
 │   │
 │   ├── package.json                    ← Next 15, React 19, Stripe v21, Supabase ssr 0.7

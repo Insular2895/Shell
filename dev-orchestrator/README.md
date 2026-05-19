@@ -7,7 +7,6 @@ Cf `AGENT_RULES.md` pour les règles agents.
 
 ## Statut
 
-Scaffold MVP. Voir le spec original (`README_FACTORY.md`) pour le détail des
-sous-dossiers et fichiers prévus. Les implémentations concrètes (CLI,
-extracteurs, dashboards UI, etc.) arrivent par phases — voir le plan de
-construction dans `README_FACTORY.md`.
+MVP policy/tooling pack. Les détecteurs TypeScript existants produisent des
+signaux exploitables par `factory dev triage`; les runners décrivent le contrat
+d'exécution agent et les templates de sortie sont prêts pour PR/reports.

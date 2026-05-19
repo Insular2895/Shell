@@ -1,4 +1,6 @@
 import chalk from 'chalk';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 
 /**
  * repoConnectCmd — connect a normalized repo to a template (via adapter)
@@ -11,6 +13,12 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function repoConnectCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] repoConnectCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  const target = path.resolve(String(args[0] ?? '.'));
+  const manifest = {
+    connected_at: new Date().toISOString(),
+    template: 'micro-saas-template-v2',
+    checks: ['security:scan', 'typecheck', 'test', 'build'],
+  };
+  await fs.writeFile(path.join(target, 'factory.connection.json'), JSON.stringify(manifest, null, 2), 'utf-8');
+  console.log(chalk.green(`Connected ${target} to factory conventions`));
 }

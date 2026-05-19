@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { execaCommand } from 'execa';
 
 /**
  * repoCloneCmd — clone a repo via GitHub CLI
@@ -11,6 +12,9 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function repoCloneCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] repoCloneCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  const repo = String(args[0] ?? '');
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error('repo:clone expects owner/repo');
+  const { stdout } = await execaCommand(`gh repo clone ${repo}`, { shell: true });
+  if (stdout) console.log(stdout);
+  console.log(chalk.green(`Cloned ${repo}`));
 }

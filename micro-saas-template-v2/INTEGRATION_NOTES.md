@@ -1,7 +1,7 @@
 # INTEGRATION_NOTES.md — Place de v2 dans la factory
 
 > Ce fichier vit dans `micro-saas-template-v2/`. Il explique comment ce
-> template s'intègre dans le repo `Insular2895/templates` et comment il
+> template s'intègre dans le repo `Insular2895/Shell` et comment il
 > respecte les règles de la factory.
 
 ## Hiérarchie des règles

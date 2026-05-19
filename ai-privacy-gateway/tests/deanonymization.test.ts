@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { saveMapping } from '../src/mapping-store.js';
 
-describe.skip('deanonymize', () => {
+describe('deanonymize', () => {
   it('restores original text from mapping', async () => {
-    // Phase 1 implementation
-    expect(true).toBe(true);
+    const { deanonymize } = await import('../src/anonymize.js');
+    const mappingId = await saveMapping(new Map([['<PERSON_1>', 'Jean Dupont']]));
+    await expect(deanonymize('Bonjour <PERSON_1>', mappingId)).resolves.toBe('Bonjour Jean Dupont');
   });
 });

@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { writeReport } from '../reports/report-writer.js';
 
 /**
  * siteAnalyzeCmd — analyze a public URL with Playwright + Firecrawl, output cleanroom feature-map
@@ -11,6 +12,13 @@ import chalk from 'chalk';
  *   - Reports written to reports/<command>/
  */
 export async function siteAnalyzeCmd(...args: unknown[]): Promise<void> {
-  console.log(chalk.yellow(`[stub] siteAnalyzeCmd called with`), args);
-  console.log(chalk.gray('Phase 1 — implementation pending. See README and AGENT_RULES.md for the spec.'));
+  const url = String(args[0] ?? '');
+  if (!/^https?:\/\//.test(url)) throw new Error('site:analyze expects an http(s) URL');
+  const res = await fetch(url, { redirect: 'follow' });
+  const html = await res.text();
+  const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() ?? url;
+  const description = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i)?.[1] ?? '';
+  const report = `# Cleanroom site analysis\n\nURL: ${url}\nStatus: ${res.status}\nTitle: ${title}\nDescription: ${description}\n\nNo proprietary source code copied.\n`;
+  const out = await writeReport('site-analysis.md', report);
+  console.log(chalk.green(`Analysis written to ${out}`));
 }

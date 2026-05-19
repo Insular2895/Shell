@@ -1,12 +1,13 @@
 # CLAUDE.md — Règles de portage (v2.0)
 
 
-> **Avant de commencer, lis dans cet ordre :**
-> 1. `/AGENTS.md` — règles opérationnelles courtes (20 lignes)
-> 2. `/RUN_SCHEMA.md` — contrat universel input/output
-> 3. Ce fichier — règles spécifiques au portage d'un repo Python métier
->
-> Doctrine complète si nécessaire : `/AGENT_RULES.md`
+> **CONTEXTE FACTORY** — Ce template vit dans le repo `Insular2895/Shell`
+> aux côtés des autres briques de la factory (`backend-packs/`, `growth-data-layer/`, etc.).
+> Avant de commencer, lis :
+> 1. `/AGENT_RULES.md` (root du repo) — doctrine globale agents
+> 2. `/agent-quality-system/policies/approval-policy.yml` — quoi est auto vs ask_before
+> 3. `/RUN_SCHEMA.md` (root) — contrat universel input/output
+> Ce CLAUDE.md spécialise ces règles pour le portage d'un repo Python métier dans v2.
 
 > **Boîte fermée. Tu portes UN repo métier dans CE template SaaS.**
 > Tu ne refactor pas le Shell. Tu ne réinventes rien.
@@ -23,7 +24,7 @@
 
 ## ❌ Tu ne touches JAMAIS
 
-`app/`, `components/`, `lib/`, `supabase/migrations/`, `middleware.ts`,
+`app/`, `components/`, `lib/`, `supabase/migrations/`, `proxy.ts`,
 `config/result.schema.ts`, `package.json`, configs Next/TS/Tailwind/Vercel.
 
 ## Le contrat (immuable)

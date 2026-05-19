@@ -5,8 +5,15 @@
  */
 export const dynamic = 'force-dynamic';
 
+import { headers } from 'next/headers';
+
 async function getSites() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/sites`, { cache: 'no-store' });
+  const headerStore = await headers();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/sites`, {
+    cache: 'no-store',
+    headers: { cookie: headerStore.get('cookie') ?? '' },
+  });
+  if (!res.ok) return { sites: [], error: `api_sites_${res.status}` };
   return res.json();
 }
 

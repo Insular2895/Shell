@@ -41,7 +41,6 @@ export default {
   reactStrictMode: true,
   poweredByHeader: false, // ne pas leak la version Next.js
   typescript: { ignoreBuildErrors: false },
-  eslint: { ignoreDuringBuilds: false },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
